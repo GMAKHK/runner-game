@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ランナートレーニング</title>
+  <link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- START SCREEN -->
+    <div id="start-screen">
+      <div class="title-bg-grid"></div>
+
+      <div class="title-eyebrow">STORE OPERATION</div>
+
+      <div class="title-logo-wrap">
+        <h1 class="title-main">
+          <span class="title-runner">RUNNER</span>
+          <span class="title-sep">◆</span>
+          <span class="title-training">TRAINING</span>
+        </h1>
+      </div>
+
+
+      <div class="mode-buttons">
+        <div class="sim-buttons">
+          <button class="btn-primary" id="btn-kds-start">◆ ランナー シミュレーター</button>
+          <button class="btn-expert" id="btn-kds-expert">EXPERT</button>
+        </div>
+        <button class="btn-tutorial" id="btn-kds-tutorial">▷ チュートリアル</button>
+        <button class="btn-secondary" id="btn-start">▶ クイズモード</button>
+      </div>
+
+      <div class="title-tagline">SPEED × ACCURACY × JUDGEMENT</div>
+      <p class="title-disclaimer">本アプリは架空の店舗を舞台にした教育目的のシミュレーターです。実在する企業・システムとは一切関係ありません。</p>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen">
+      <!-- Progress -->
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" style="width:0%"></div>
+      </div>
+
+      <!-- Header -->
+      <div class="scenario-header">
+        <span class="scenario-num">1 / 5</span>
+        <span class="score-display">スコア: 0</span>
+      </div>
+
+      <!-- Timer -->
+      <div class="timer-wrap">
+        <div class="timer-bar-bg">
+          <div class="timer-bar" id="timer-bar" style="width:100%"></div>
+        </div>
+        <div class="timer-num" id="timer-num">10</div>
+      </div>
+
+      <!-- Scenario -->
+      <div class="scenario-card">
+        <h2 id="scenario-title"></h2>
+        <p id="scenario-desc"></p>
+      </div>
+
+      <!-- Timeout message -->
+      <div class="timeout-msg" id="timeout-msg">時間切れ！</div>
+
+      <!-- Choices -->
+      <div class="choices" id="choices"></div>
+
+      <!-- Feedback -->
+      <div class="feedback-box" id="feedback-box"></div>
+
+      <!-- Next -->
+      <button class="btn-next" id="btn-next">次のシナリオへ →</button>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result-screen">
+      <h2>結果発表</h2>
+      <div class="final-score" id="final-score">0 pt</div>
+      <div class="rank" id="rank">C ランク</div>
+
+      <div class="breakdown">
+        <h3>スコア内訳</h3>
+        <div id="breakdown-list"></div>
+      </div>
+
+      <div style="display:flex; gap:12px; justify-content:center; margin-top:24px;">
+        <button class="btn-retry" id="btn-retry">もう一度チャレンジ</button>
+        <button class="btn-retry" id="btn-quiz-home">ホームへ</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- KDS GAME SCREEN (full viewport, outside #app) -->
+  <div id="kds-screen" style="display:none">
+    <div class="kds-header">
+      <button class="kds-brand" id="btn-kds-home">◆ RUNNER SIMULATOR</button>
+      <span class="kds-mode-badge" id="kds-mode-badge" style="display:none">EXPERT</span>
+      <button class="btn-danger-call" id="btn-danger">🚨 デンジャーコール</button>
+      <div class="kds-stats">
+        <div class="kds-stat">
+          <div class="kds-stat-label">ⓣⓣⓢ avg</div>
+          <div class="kds-stat-val" id="kds-tts-avg">--:--</div>
+        </div>
+        <div class="kds-stat">
+          <div class="kds-stat-label">RtoP avg</div>
+          <div class="kds-stat-val" id="kds-r2p-avg">--:--</div>
+        </div>
+        <div class="kds-stat">
+          <div class="kds-stat-label">Sales</div>
+          <div class="kds-stat-val" id="kds-sales-val">¥0</div>
+        </div>
+        <div class="kds-stat">
+          <div class="kds-stat-label">AC</div>
+          <div class="kds-stat-val" id="kds-ac-val">--</div>
+        </div>
+        <div class="kds-stat">
+          <div class="kds-stat-label">Orders</div>
+          <div class="kds-stat-val" id="kds-order-count">0</div>
+        </div>
+      </div>
+      <div class="kds-countdown-wrap">
+        残り <span id="kds-countdown">10:00</span>
+      </div>
+      <button class="kds-settings-btn" id="btn-kds-settings" title="設定">⚙</button>
+    </div>
+    <div class="kds-grid" id="kds-grid">
+      <div class="kds-empty">オーダー待機中...</div>
+    </div>
+
+    <!-- Potato Station -->
+    <div class="potato-station" id="potato-station">
+      <div class="potato-station-header">
+        <span class="potato-station-title">🍟 ポテトステーション</span>
+      </div>
+      <div class="potato-station-body">
+        <div class="fryer-row" id="fryer-row"></div>
+        <div id="potato-stock-display"></div>
+      </div>
+    </div>
+
+    <div class="kds-feedback-toast" id="kds-feedback"></div>
+    <div class="kds-final-countdown" id="kds-final-countdown"></div>
+  </div>
+
+  <!-- KDS RESULT SCREEN -->
+  <div id="kds-result-screen" style="display:none">
+    <div id="kds-gameover-banner" style="display:none">GAME OVER</div>
+    <h2>ランナー シミュ 結果</h2>
+    <div class="final-score" id="kds-res-score">0 pt</div>
+    <div class="rank" id="kds-res-rank">C ランク</div>
+    <div class="kds-res-metrics" id="kds-res-details"></div>
+    <div class="breakdown">
+      <h3>オーダー別 RtoP / ⓣⓣⓢ</h3>
+      <div id="kds-res-breakdown"></div>
+    </div>
+    <div style="display:flex; gap:12px; justify-content:center; margin-top:24px;">
+      <button class="btn-retry" id="btn-kds-retry">もう一度</button>
+      <button class="btn-retry" id="btn-back-home">ホームへ</button>
+    </div>
+  </div>
+
+  <!-- GAME OVER SPLASH -->
+  <div id="gameover-splash" style="display:none">
+    <div id="gameover-splash-bg"></div>
+    <div id="gameover-splash-content"></div>
+    <div id="gameover-splash-label"></div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-modal" class="settings-overlay" style="display:none">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <span>設定</span>
+        <button class="settings-close" id="btn-settings-close">✕</button>
+      </div>
+      <div class="settings-body">
+        <label class="settings-row">
+          <span>効果音</span>
+          <input type="checkbox" id="sfx-toggle" checked>
+        </label>
+        <label class="settings-row">
+          <span>音量</span>
+          <div class="volume-row">
+            <input type="range" id="sfx-volume" min="0" max="100" value="100">
+            <span id="sfx-volume-label">100%</span>
+          </div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- TUTORIAL OVERLAY -->
+  <div id="tut-overlay" style="display:none">
+    <div id="tut-spotlight"></div>
+    <div id="tut-bubble">
+      <div id="tut-bubble-title"></div>
+      <div id="tut-bubble-text"></div>
+      <div id="tut-bubble-actions"></div>
+    </div>
+  </div>
+
+  <script type="module" src="src/game.js"></script>
+  <script type="module" src="src/kds.js"></script>
+  <script type="module" src="src/tutorial.js"></script>
+</body>
+</html>
