@@ -1006,7 +1006,35 @@ body {
 }
 
 .potato-station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.potato-station-toggle {
+  background: none;
+  border: none;
+  color: #f59e0b;
+  font-size: 0.75rem;
+  padding: 0 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+.potato-station.collapsed .potato-station-toggle {
+  transform: rotate(-90deg);
+}
+
+.potato-station.collapsed .potato-station-body {
+  display: none;
+}
+
+.potato-station.collapsed {
+  padding-bottom: 8px;
 }
 
 .potato-station-title {
@@ -1661,5 +1689,27 @@ body {
   .stock-potato-icons  { font-size: 0.75rem; }
   .stock-expiry        { font-size: 0.58rem; }
   .btn-potato-conv     { font-size: 0.6rem; padding: 2px 5px; }
+
+  /* ── オーダーカード ── */
+  .order-card {
+    padding: 7px 8px;
+    gap: 5px;
+    border-radius: 4px;
+  }
+  .card-header { margin-bottom: 0; }
+  .order-num   { font-size: 0.85rem; }
+  .tts-counter { font-size: 0.78rem; }
+  .item-list   { gap: 2px; font-size: 0.78rem; }
+  .item-list li { gap: 4px; }
+  .item-countdown { font-size: 0.68rem; min-width: 24px; }
+  .wait-badge  { padding: 1px 0 2px; font-size: 0.7rem; }
+  .card-footer { padding-top: 5px; margin-top: 0; }
+
+  /* ── フッターボタン ── */
+  .footer-actions { gap: 4px; }
+  .btn-wait,
+  .btn-chaser,
+  .btn-call-mgr  { padding: 4px 7px; font-size: 0.68rem; }
+  .btn-present   { padding: 4px 10px; font-size: 0.68rem; }
 }
 

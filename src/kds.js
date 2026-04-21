@@ -1930,6 +1930,10 @@ sfxVolumeLabel.textContent = sfxVolumeSlider.value + '%';
 document.getElementById('btn-kds-settings').addEventListener('click', () => {
   settingsModal.style.display = 'flex';
 });
+
+document.getElementById('potato-station-header').addEventListener('click', () => {
+  document.getElementById('potato-station').classList.toggle('collapsed');
+});
 document.getElementById('btn-settings-close').addEventListener('click', () => {
   settingsModal.style.display = 'none';
 });
