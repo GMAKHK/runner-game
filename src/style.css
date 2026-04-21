@@ -1602,6 +1602,40 @@ body {
 }
 .tut-btn-secondary:hover { background: #1e4080; }
 
+/* 吹き出し非表示ボタン */
+.tut-hide-btn {
+  float: right;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  pointer-events: auto;
+}
+.tut-hide-btn:hover { color: #fff; }
+
+/* 復元ボタン */
+#tut-restore {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: #0f1f38;
+  border: 2px solid #f0a500;
+  color: #f0a500;
+  font-size: 0.78rem;
+  font-weight: bold;
+  padding: 7px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 502;
+  pointer-events: auto;
+  align-items: center;
+  gap: 4px;
+}
+#tut-restore:hover { background: #1a3050; }
+
 /* Bubble fade-in (opacity only — transform は JS で位置制御するため使わない) */
 @keyframes tutFadeIn {
   from { opacity: 0; }
@@ -1643,6 +1677,36 @@ body {
 
 /* ===== MOBILE 共通 (縦横両方) ===== */
 @media (max-width: 768px) {
+
+  /* ── ホーム画面: 1画面に収める ── */
+  #start-screen {
+    min-height: 100dvh;
+    height: 100dvh;
+    padding: 16px 20px 12px;
+    gap: 0;
+    justify-content: space-evenly;
+    overflow: hidden;
+  }
+  .title-eyebrow    { margin-bottom: 0; font-size: 0.6rem; }
+  .title-logo-wrap  { margin-bottom: 0; }
+  .title-main       { gap: 2px; margin-bottom: 6px; }
+  .title-runner     { font-size: clamp(2.4rem, 12vw, 3.8rem); }
+  .title-training   { font-size: clamp(1rem, 4.5vw, 1.6rem); letter-spacing: 0.3em; }
+  .title-badge      { margin-bottom: 0; padding: 4px 14px; font-size: 0.75rem; }
+  .title-meta       { margin-bottom: 0; font-size: 0.7rem; }
+  .title-tagline    { margin-top: 0; font-size: 0.58rem; }
+  .title-version    { margin-top: 2px; }
+  .title-disclaimer { margin-top: 4px; font-size: 0.54rem; }
+  .mode-buttons     { gap: 8px; width: 100%; }
+  .btn-primary      { padding: 12px 24px; font-size: 0.9rem; }
+  .btn-tutorial     { padding: 9px 24px;  font-size: 0.85rem; }
+  .btn-secondary    { padding: 9px 24px;  font-size: 0.85rem; }
+
+  /* ── KDSリザルト: スクロール前提・padding縮小 ── */
+  #kds-result-screen {
+    padding: 16px;
+    min-height: 100dvh;
+  }
 
   /* ── オーダーカード ── */
   .order-card {
@@ -1742,11 +1806,11 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 
-  /* ポテトステーション: コンパクト・折りたたみあり */
+  /* ポテトステーション: コンパクト・折りたたみあり・トグルボタン中央 */
   .potato-station { padding: 3px 8px 5px; }
   .potato-station.collapsed { padding: 2px 8px 2px; }
   .potato-station.collapsed .potato-station-header { margin-bottom: 0; }
-  .potato-station-header { margin-bottom: 3px; }
+  .potato-station-header { margin-bottom: 3px; justify-content: center; gap: 8px; }
   .potato-station-title  { font-size: 0.65rem; }
   .potato-station-body   { flex-direction: row; gap: 8px; overflow-x: auto; }
   .fryer-row   { flex-shrink: 0; gap: 4px; }
@@ -1763,18 +1827,39 @@ body {
   .stock-expiry       { font-size: 0.5rem; }
   .btn-potato-conv    { font-size: 0.54rem; padding: 1px 4px; }
 
+  /* ホーム画面: 横向きは2カラム風にコンパクト */
+  #start-screen {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 16px;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+  }
+  .title-logo-wrap  { width: 100%; margin-bottom: 0; }
+  .title-runner     { font-size: clamp(1.6rem, 8vw, 2.8rem); }
+  .title-training   { font-size: clamp(0.75rem, 3vw, 1.1rem); letter-spacing: 0.25em; }
+  .title-badge      { margin-bottom: 0; padding: 3px 10px; font-size: 0.68rem; }
+  .title-eyebrow    { font-size: 0.54rem; margin-bottom: 0; }
+  .title-meta       { font-size: 0.62rem; margin-bottom: 0; }
+  .title-tagline    { display: none; }
+  .mode-buttons     { gap: 6px; }
+  .btn-primary      { padding: 9px 18px; font-size: 0.82rem; }
+  .btn-tutorial     { padding: 7px 18px; font-size: 0.78rem; }
+  .btn-secondary    { padding: 7px 18px; font-size: 0.78rem; }
+
   /* リザルト画面: 横スクロール対応・コンパクト */
   #kds-result-screen {
-    padding: 10px 16px;
-    min-height: auto;
+    padding: 8px 16px;
+    min-height: 100dvh;
     overflow-y: auto;
   }
-  #kds-result-screen h2 { font-size: 1.1rem; margin-bottom: 8px; }
+  #kds-result-screen h2 { font-size: 1.1rem; margin-bottom: 6px; }
   .final-score          { font-size: 2rem; }
-  .rank                 { font-size: 1rem; margin-bottom: 8px; }
-  .kds-res-metrics      { padding: 8px; margin-bottom: 10px; }
+  .rank                 { font-size: 1rem; margin-bottom: 6px; }
+  .kds-res-metrics      { padding: 8px; margin-bottom: 8px; }
   .res-metric           { padding: 4px 0; font-size: 0.8rem; }
   .fb-item              { padding: 5px 8px; font-size: 0.75rem; margin-bottom: 4px; }
-  .feedback-section     { margin: 8px 0 4px; }
+  .feedback-section     { margin: 6px 0 4px; }
 }
 

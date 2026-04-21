@@ -293,6 +293,8 @@ function goStep(n) {
 
   // ① 吹き出しをフェードアウト、スポットライトの暗転も一旦リセット
   bubble.style.opacity = '0';
+  bubble.style.display = '';
+  document.getElementById('tut-restore').style.display = 'none';
   spotlight.classList.remove('lit');
 
   // ② SPOTLIGHT_MOVE_DELAY 後にスポットライトを新ターゲットへ移動
@@ -377,9 +379,9 @@ function renderBubble(def) {
   const textEl  = document.getElementById('tut-bubble-text');
   const actEl   = document.getElementById('tut-bubble-actions');
 
-  titleEl.textContent = def.title;
-  textEl.innerHTML    = def.text;
-  actEl.innerHTML     = (def.actions || []).map(a =>
+  titleEl.innerHTML = `${def.title}<button class="tut-hide-btn" id="tut-hide-btn">−</button>`;
+  textEl.innerHTML  = def.text;
+  actEl.innerHTML   = (def.actions || []).map(a =>
     `<button class="tut-btn ${a.primary ? 'tut-btn-primary' : 'tut-btn-secondary'}" data-tut-id="${a.id}">${a.label}</button>`
   ).join('');
 
@@ -463,6 +465,21 @@ document.getElementById('tut-bubble-actions').addEventListener('click', e => {
   if (!btn) return;
   const def = STEPS[step];
   if (def && def.onAction) def.onAction(btn.dataset.tutId);
+});
+
+// 吹き出し最小化 / 復元
+document.getElementById('tut-bubble').addEventListener('click', e => {
+  if (!e.target.closest('#tut-hide-btn')) return;
+  const bubble  = document.getElementById('tut-bubble');
+  const restore = document.getElementById('tut-restore');
+  bubble.style.display  = 'none';
+  restore.style.display = 'flex';
+});
+document.getElementById('tut-restore').addEventListener('click', () => {
+  const bubble  = document.getElementById('tut-bubble');
+  const restore = document.getElementById('tut-restore');
+  bubble.style.display  = '';
+  restore.style.display = 'none';
 });
 
 // ── Entry point ───────────────────────────────────────────────────────────────

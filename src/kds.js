@@ -1,5 +1,5 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.0.4';
+const APP_VERSION = 'v1.0.6';
 document.getElementById('title-version').textContent = APP_VERSION;
 
 import { sfxPotatoDone, sfxPresent, sfxCallMgr, sfxWait, sfxChaser,
