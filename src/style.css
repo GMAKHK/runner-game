@@ -158,6 +158,15 @@ body {
   animation: fadeDown 0.9s ease 0.5s both;
 }
 
+.title-version {
+  position: relative;
+  z-index: 1;
+  margin-top: 6px;
+  font-size: 0.6rem;
+  color: #2a2a3a;
+  text-align: center;
+}
+
 .title-disclaimer {
   position: relative;
   z-index: 1;
