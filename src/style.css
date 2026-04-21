@@ -1680,9 +1680,8 @@ body {
   .potato-station-header { margin-bottom: 3px; }
   .potato-station-title  { font-size: 0.7rem; }
   .potato-station-body {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
   }
   .fryer-row   { flex-shrink: 0; gap: 6px; }
   .fryer-slot  { width: 88px; padding: 5px 7px; gap: 3px; }
