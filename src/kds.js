@@ -1,5 +1,5 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.0.1';
+const APP_VERSION = 'v1.0.3';
 document.getElementById('title-version').textContent = APP_VERSION;
 
 import { sfxPotatoDone, sfxPresent, sfxCallMgr, sfxWait, sfxChaser,
@@ -1936,6 +1936,18 @@ document.getElementById('btn-kds-settings').addEventListener('click', () => {
 document.getElementById('potato-station-header').addEventListener('click', () => {
   document.getElementById('potato-station').classList.toggle('collapsed');
 });
+
+// ポテトステーション: スワイプで開閉
+{
+  const ps = document.getElementById('potato-station');
+  let _ty = 0;
+  ps.addEventListener('touchstart', e => { _ty = e.touches[0].clientY; }, { passive: true });
+  ps.addEventListener('touchend', e => {
+    const d = e.changedTouches[0].clientY - _ty;
+    if (d < -40) ps.classList.remove('collapsed'); // 上スワイプ → 展開
+    if (d >  40) ps.classList.add('collapsed');    // 下スワイプ → 折りたたみ
+  }, { passive: true });
+}
 document.getElementById('btn-settings-close').addEventListener('click', () => {
   settingsModal.style.display = 'none';
 });

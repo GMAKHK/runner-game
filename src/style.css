@@ -1644,27 +1644,22 @@ body {
 /* ===== MOBILE ===== */
 @media (max-width: 640px) {
 
-  /* ── ヘッダー: 折り返しなし・コンパクト ── */
+  /* ── ヘッダー: タイトル非表示・最小余白 ── */
   .kds-header {
-    padding: 5px 8px;
+    padding: 3px 6px;
     gap: 6px;
     flex-wrap: nowrap;
-    overflow-x: auto;
   }
-  .kds-brand {
-    font-size: 0.7rem;
-    letter-spacing: 0;
-    padding: 2px 4px;
-  }
-  /* TTS avg / AC / Orders は非表示 — RtoP avg と残り時間だけ残す */
+  .kds-brand          { display: none; }
+  /* RtoP avg のみ表示、他の stat は非表示 */
   .kds-stat:not(:nth-child(2)) { display: none; }
-  .kds-stat-val  { font-size: 0.85rem; }
-  .kds-stat-label { font-size: 0.55rem; }
+  .kds-stat-val       { font-size: 0.82rem; }
+  .kds-stat-label     { font-size: 0.54rem; }
   .kds-countdown-wrap { font-size: 0.7rem; }
-  #kds-countdown      { font-size: 0.9rem; }
-  .kds-mode-badge     { font-size: 0.65rem; padding: 2px 6px; }
-  .btn-danger-call    { font-size: 0.7rem;  padding: 5px 8px; }
-  .kds-settings-btn   { font-size: 0.9rem;  padding: 3px 7px; }
+  #kds-countdown      { font-size: 0.88rem; }
+  .kds-mode-badge     { font-size: 0.62rem; padding: 2px 5px; }
+  .btn-danger-call    { font-size: 0.68rem; padding: 4px 7px; }
+  .kds-settings-btn   { font-size: 0.88rem; padding: 2px 6px; }
 
   /* ── オーダーグリッド: 2カラム ── */
   .kds-grid {
@@ -1690,6 +1685,14 @@ body {
   .fryer-phase-label { font-size: 0.6rem; }
   .fryer-remain      { font-size: 0.58rem; }
   .fryer-bar-bg      { height: 4px; }
+
+  /* 折りたたみ時はヘッダーだけ極限まで小さく */
+  .potato-station.collapsed {
+    padding: 2px 8px 3px;
+  }
+  .potato-station.collapsed .potato-station-header {
+    margin-bottom: 0;
+  }
 
   .stock-grid { gap: 6px; }
   .stock-box  { padding: 4px 6px; }
