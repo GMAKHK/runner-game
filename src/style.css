@@ -1641,65 +1641,8 @@ body {
   border-top-color: #0f1f38;
 }
 
-/* ===== MOBILE ===== */
-@media (max-width: 640px) {
-
-  /* ── ヘッダー: タイトル非表示・最小余白 ── */
-  .kds-header {
-    padding: 3px 6px;
-    gap: 6px;
-    flex-wrap: nowrap;
-  }
-  .kds-brand          { display: none; }
-  /* RtoP avg のみ表示、他の stat は非表示 */
-  .kds-stat:not(:nth-child(2)) { display: none; }
-  .kds-stat-val       { font-size: 0.82rem; }
-  .kds-stat-label     { font-size: 0.54rem; }
-  .kds-countdown-wrap { font-size: 0.7rem; }
-  #kds-countdown      { font-size: 0.88rem; }
-  .kds-mode-badge     { font-size: 0.62rem; padding: 2px 5px; }
-  .btn-danger-call    { font-size: 0.68rem; padding: 4px 7px; }
-  .kds-settings-btn   { font-size: 0.88rem; padding: 2px 6px; }
-
-  /* ── オーダーグリッド: 2カラム ── */
-  .kds-grid {
-    padding: 4px;
-    gap: 4px;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  /* ── ポテトステーション: 横スクロールで縦を最小化 ── */
-  .potato-station {
-    padding: 5px 8px 7px;
-  }
-  .potato-station-header { margin-bottom: 3px; }
-  .potato-station-title  { font-size: 0.7rem; }
-  .potato-station-body {
-    flex-direction: column;
-    gap: 6px;
-  }
-  .fryer-row   { flex-shrink: 0; gap: 6px; }
-  .fryer-slot  { width: 88px; padding: 5px 7px; gap: 3px; }
-  .fryer-label { font-size: 0.58rem; }
-  .btn-fry-start { padding: 3px 4px; font-size: 0.62rem; }
-  .fryer-phase-label { font-size: 0.6rem; }
-  .fryer-remain      { font-size: 0.58rem; }
-  .fryer-bar-bg      { height: 4px; }
-
-  /* 折りたたみ時はヘッダーだけ極限まで小さく */
-  .potato-station.collapsed {
-    padding: 2px 8px 3px;
-  }
-  .potato-station.collapsed .potato-station-header {
-    margin-bottom: 0;
-  }
-
-  .stock-grid { gap: 6px; }
-  .stock-box  { padding: 4px 6px; }
-  .stock-size-label    { font-size: 0.62rem; }
-  .stock-potato-icons  { font-size: 0.75rem; }
-  .stock-expiry        { font-size: 0.58rem; }
-  .btn-potato-conv     { font-size: 0.6rem; padding: 2px 5px; }
+/* ===== MOBILE 共通 (縦横両方) ===== */
+@media (max-width: 768px) {
 
   /* ── オーダーカード ── */
   .order-card {
@@ -1722,5 +1665,116 @@ body {
   .btn-chaser,
   .btn-call-mgr  { padding: 4px 7px; font-size: 0.68rem; }
   .btn-present   { padding: 4px 10px; font-size: 0.68rem; }
+}
+
+/* ===== MOBILE 縦画面（通常）===== */
+@media (max-width: 768px) and (orientation: portrait) {
+
+  /* ヘッダー: タイトル非表示・最小余白 */
+  .kds-header {
+    padding: 3px 6px;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .kds-brand { display: none; }
+  .kds-stat:not(:nth-child(2)) { display: none; }
+  .kds-stat-val       { font-size: 0.82rem; }
+  .kds-stat-label     { font-size: 0.54rem; }
+  .kds-countdown-wrap { font-size: 0.7rem; }
+  #kds-countdown      { font-size: 0.88rem; }
+  .kds-mode-badge     { font-size: 0.62rem; padding: 2px 5px; }
+  .btn-danger-call    { font-size: 0.68rem; padding: 4px 7px; }
+  .kds-settings-btn   { font-size: 0.88rem; padding: 2px 6px; }
+
+  /* グリッド: 2カラム */
+  .kds-grid {
+    padding: 4px;
+    gap: 4px;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* ポテトステーション: 常時表示・折りたたみなし */
+  .potato-station-toggle { display: none; }
+  .potato-station.collapsed .potato-station-body { display: flex !important; }
+  .potato-station.collapsed { padding: 5px 8px 7px; }
+  .potato-station { padding: 5px 8px 7px; }
+  .potato-station-header { margin-bottom: 4px; }
+  .potato-station-title  { font-size: 0.7rem; }
+  .potato-station-body   { flex-direction: column; gap: 6px; }
+  .fryer-row   { gap: 6px; }
+  .fryer-slot  { width: 86px; padding: 4px 6px; gap: 3px; }
+  .fryer-label { font-size: 0.58rem; }
+  .btn-fry-start { padding: 3px 4px; font-size: 0.62rem; }
+  .fryer-phase-label { font-size: 0.6rem; }
+  .fryer-remain { font-size: 0.58rem; }
+  .fryer-bar-bg { height: 4px; }
+  .stock-grid { gap: 5px; }
+  .stock-box  { padding: 3px 5px; }
+  .stock-size-label   { font-size: 0.62rem; }
+  .stock-potato-icons { font-size: 0.75rem; }
+  .stock-expiry       { font-size: 0.58rem; }
+  .btn-potato-conv    { font-size: 0.6rem; padding: 2px 5px; }
+}
+
+/* ===== MOBILE 横画面（フルスクリーン）===== */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* ヘッダー: タイトル・ⓣⓣⓢ非表示、余白最小 */
+  .kds-header {
+    padding: 2px 6px;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .kds-brand { display: none; }
+  .kds-stat:not(:nth-child(2)) { display: none; }
+  .kds-stat-val       { font-size: 0.78rem; }
+  .kds-stat-label     { font-size: 0.5rem; }
+  .kds-countdown-wrap { font-size: 0.65rem; }
+  #kds-countdown      { font-size: 0.82rem; }
+  .kds-mode-badge     { font-size: 0.6rem; padding: 1px 4px; }
+  .btn-danger-call    { font-size: 0.65rem; padding: 3px 6px; }
+  .kds-settings-btn   { font-size: 0.82rem; padding: 2px 5px; }
+
+  /* グリッド: 横に広いので3カラム */
+  .kds-grid {
+    padding: 3px;
+    gap: 3px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  /* ポテトステーション: コンパクト・折りたたみあり */
+  .potato-station { padding: 3px 8px 5px; }
+  .potato-station.collapsed { padding: 2px 8px 2px; }
+  .potato-station.collapsed .potato-station-header { margin-bottom: 0; }
+  .potato-station-header { margin-bottom: 3px; }
+  .potato-station-title  { font-size: 0.65rem; }
+  .potato-station-body   { flex-direction: row; gap: 8px; overflow-x: auto; }
+  .fryer-row   { flex-shrink: 0; gap: 4px; }
+  .fryer-slot  { width: 76px; padding: 3px 5px; gap: 2px; }
+  .fryer-label { font-size: 0.52rem; }
+  .btn-fry-start { padding: 2px 3px; font-size: 0.56rem; }
+  .fryer-phase-label { font-size: 0.52rem; }
+  .fryer-remain { font-size: 0.5rem; }
+  .fryer-bar-bg { height: 3px; }
+  .stock-grid { gap: 4px; }
+  .stock-box  { padding: 2px 4px; }
+  .stock-size-label   { font-size: 0.55rem; }
+  .stock-potato-icons { font-size: 0.6rem; }
+  .stock-expiry       { font-size: 0.5rem; }
+  .btn-potato-conv    { font-size: 0.54rem; padding: 1px 4px; }
+
+  /* リザルト画面: 横スクロール対応・コンパクト */
+  #kds-result-screen {
+    padding: 10px 16px;
+    min-height: auto;
+    overflow-y: auto;
+  }
+  #kds-result-screen h2 { font-size: 1.1rem; margin-bottom: 8px; }
+  .final-score          { font-size: 2rem; }
+  .rank                 { font-size: 1rem; margin-bottom: 8px; }
+  .kds-res-metrics      { padding: 8px; margin-bottom: 10px; }
+  .res-metric           { padding: 4px 0; font-size: 0.8rem; }
+  .fb-item              { padding: 5px 8px; font-size: 0.75rem; margin-bottom: 4px; }
+  .feedback-section     { margin: 8px 0 4px; }
 }
 
