@@ -1,5 +1,5 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.0.6';
+const APP_VERSION = 'v1.0.7';
 document.getElementById('title-version').textContent = APP_VERSION;
 
 import { sfxPotatoDone, sfxPresent, sfxCallMgr, sfxWait, sfxChaser,
@@ -1796,10 +1796,14 @@ function showResult() {
   else
     feedbacks.push({ type: 'bad',  text: `${missed}件が未提供でした（3件超過分 -${(missed - 3) * 20}pt）。優先度の高いオーダーから処理する判断力と、複数オーダーの並行管理を練習しましょう。` });
 
-  // GAME OVER 時は良い評価コメントを除外
-  const displayedFeedbacks = gameOverReason
+  // GAME OVER 時は良い評価コメントを除外、優先度順（bad→ok→good）で最大5件
+  const filteredFeedbacks = gameOverReason
     ? feedbacks.filter(f => f.type !== 'good')
     : feedbacks;
+  const priorityOrder = { bad: 0, ok: 1, good: 2 };
+  const displayedFeedbacks = [...filteredFeedbacks]
+    .sort((a, b) => priorityOrder[a.type] - priorityOrder[b.type])
+    .slice(0, 5);
 
   // 前回フィードバックを削除してから新規挿入
   const oldFb = document.querySelector('.feedback-section');
