@@ -1602,6 +1602,40 @@ body {
 }
 .tut-btn-secondary:hover { background: #1e4080; }
 
+/* 吹き出し非表示ボタン */
+.tut-hide-btn {
+  float: right;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  pointer-events: auto;
+}
+.tut-hide-btn:hover { color: #fff; }
+
+/* 復元ボタン */
+#tut-restore {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: #0f1f38;
+  border: 2px solid #f0a500;
+  color: #f0a500;
+  font-size: 0.78rem;
+  font-weight: bold;
+  padding: 7px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  z-index: 502;
+  pointer-events: auto;
+  align-items: center;
+  gap: 4px;
+}
+#tut-restore:hover { background: #1a3050; }
+
 /* Bubble fade-in (opacity only — transform は JS で位置制御するため使わない) */
 @keyframes tutFadeIn {
   from { opacity: 0; }
@@ -1742,11 +1776,11 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 
-  /* ポテトステーション: コンパクト・折りたたみあり */
+  /* ポテトステーション: コンパクト・折りたたみあり・トグルボタン中央 */
   .potato-station { padding: 3px 8px 5px; }
   .potato-station.collapsed { padding: 2px 8px 2px; }
   .potato-station.collapsed .potato-station-header { margin-bottom: 0; }
-  .potato-station-header { margin-bottom: 3px; }
+  .potato-station-header { margin-bottom: 3px; justify-content: center; gap: 8px; }
   .potato-station-title  { font-size: 0.65rem; }
   .potato-station-body   { flex-direction: row; gap: 8px; overflow-x: auto; }
   .fryer-row   { flex-shrink: 0; gap: 4px; }
