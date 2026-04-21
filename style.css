@@ -1006,7 +1006,35 @@ body {
 }
 
 .potato-station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.potato-station-toggle {
+  background: none;
+  border: none;
+  color: #f59e0b;
+  font-size: 0.75rem;
+  padding: 0 4px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  line-height: 1;
+}
+
+.potato-station.collapsed .potato-station-toggle {
+  transform: rotate(-90deg);
+}
+
+.potato-station.collapsed .potato-station-body {
+  display: none;
+}
+
+.potato-station.collapsed {
+  padding-bottom: 8px;
 }
 
 .potato-station-title {
@@ -1603,3 +1631,85 @@ body {
   border: 6px solid transparent;
   border-top-color: #0f1f38;
 }
+
+/* ===== MOBILE ===== */
+@media (max-width: 640px) {
+
+  /* ── ヘッダー: 折り返しなし・コンパクト ── */
+  .kds-header {
+    padding: 5px 8px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .kds-brand {
+    font-size: 0.7rem;
+    letter-spacing: 0;
+    padding: 2px 4px;
+  }
+  /* TTS avg / AC / Orders は非表示 — RtoP avg と残り時間だけ残す */
+  .kds-stat:not(:nth-child(2)) { display: none; }
+  .kds-stat-val  { font-size: 0.85rem; }
+  .kds-stat-label { font-size: 0.55rem; }
+  .kds-countdown-wrap { font-size: 0.7rem; }
+  #kds-countdown      { font-size: 0.9rem; }
+  .kds-mode-badge     { font-size: 0.65rem; padding: 2px 6px; }
+  .btn-danger-call    { font-size: 0.7rem;  padding: 5px 8px; }
+  .kds-settings-btn   { font-size: 0.9rem;  padding: 3px 7px; }
+
+  /* ── オーダーグリッド: 1カラム ── */
+  .kds-grid {
+    padding: 8px;
+    gap: 8px;
+    grid-template-columns: 1fr;
+  }
+
+  /* ── ポテトステーション: 横スクロールで縦を最小化 ── */
+  .potato-station {
+    padding: 5px 8px 7px;
+  }
+  .potato-station-header { margin-bottom: 3px; }
+  .potato-station-title  { font-size: 0.7rem; }
+  .potato-station-body {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .fryer-row   { flex-shrink: 0; gap: 6px; }
+  .fryer-slot  { width: 88px; padding: 5px 7px; gap: 3px; }
+  .fryer-label { font-size: 0.58rem; }
+  .btn-fry-start { padding: 3px 4px; font-size: 0.62rem; }
+  .fryer-phase-label { font-size: 0.6rem; }
+  .fryer-remain      { font-size: 0.58rem; }
+  .fryer-bar-bg      { height: 4px; }
+
+  .stock-grid { gap: 6px; }
+  .stock-box  { padding: 4px 6px; }
+  .stock-size-label    { font-size: 0.62rem; }
+  .stock-potato-icons  { font-size: 0.75rem; }
+  .stock-expiry        { font-size: 0.58rem; }
+  .btn-potato-conv     { font-size: 0.6rem; padding: 2px 5px; }
+
+  /* ── オーダーカード ── */
+  .order-card {
+    padding: 7px 8px;
+    gap: 5px;
+    border-radius: 4px;
+  }
+  .card-header { margin-bottom: 0; }
+  .order-num   { font-size: 0.85rem; }
+  .tts-counter { font-size: 0.78rem; }
+  .item-list   { gap: 2px; font-size: 0.78rem; }
+  .item-list li { gap: 4px; }
+  .item-countdown { font-size: 0.68rem; min-width: 24px; }
+  .wait-badge  { padding: 1px 0 2px; font-size: 0.7rem; }
+  .card-footer { padding-top: 5px; margin-top: 0; }
+
+  /* ── フッターボタン ── */
+  .footer-actions { gap: 4px; }
+  .btn-wait,
+  .btn-chaser,
+  .btn-call-mgr  { padding: 4px 7px; font-size: 0.68rem; }
+  .btn-present   { padding: 4px 10px; font-size: 0.68rem; }
+}
+
