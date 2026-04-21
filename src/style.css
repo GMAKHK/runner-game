@@ -732,10 +732,10 @@ body {
 .kds-grid {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 10px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
   align-content: start;
 }
 
@@ -1666,11 +1666,11 @@ body {
   .btn-danger-call    { font-size: 0.7rem;  padding: 5px 8px; }
   .kds-settings-btn   { font-size: 0.9rem;  padding: 3px 7px; }
 
-  /* ── オーダーグリッド: 1カラム ── */
+  /* ── オーダーグリッド: 2カラム ── */
   .kds-grid {
-    padding: 8px;
-    gap: 8px;
-    grid-template-columns: 1fr;
+    padding: 4px;
+    gap: 4px;
+    grid-template-columns: 1fr 1fr;
   }
 
   /* ── ポテトステーション: 横スクロールで縦を最小化 ── */
@@ -1701,8 +1701,8 @@ body {
 
   /* ── オーダーカード ── */
   .order-card {
-    padding: 7px 8px;
-    gap: 5px;
+    padding: 5px 6px;
+    gap: 4px;
     border-radius: 4px;
   }
   .card-header { margin-bottom: 0; }
