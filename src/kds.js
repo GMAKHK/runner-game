@@ -1,5 +1,5 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.0.7';
+const APP_VERSION = 'v1.0.8';
 document.getElementById('title-version').textContent = APP_VERSION;
 
 import { sfxPotatoDone, sfxPresent, sfxCallMgr, sfxWait, sfxChaser,
@@ -811,11 +811,11 @@ function initFryers() {
   fryers = Array.from({ length: FRYER_COUNT }, (_, i) => ({
     id: i, size: null, phase: 'empty', phaseStart: 0,
   }));
-  // 初期ストック: 通常 S=1,M=3,L=1 / エキスパート S=3,M=6,L=2
+  // 初期ストック: 通常 S=3,M=5,L=3 / エキスパート S=3,M=6,L=2
   const initExpiry = Date.now() + POTATO_HOLD_TIME * 1000;
   potatoStock = expertMode
     ? { S: [{ qty: 3, expiresAt: initExpiry }], M: [{ qty: 6, expiresAt: initExpiry }], L: [{ qty: 2, expiresAt: initExpiry }] }
-    : { S: [{ qty: 1, expiresAt: initExpiry }], M: [{ qty: 3, expiresAt: initExpiry }], L: [{ qty: 1, expiresAt: initExpiry }] };
+    : { S: [{ qty: 3, expiresAt: initExpiry }], M: [{ qty: 5, expiresAt: initExpiry }], L: [{ qty: 3, expiresAt: initExpiry }] };
   // バット1をゲーム開始時から調理中（サイズは完了時に決定）
   fryers[0].size       = null;
   fryers[0].phase      = 'frying';
