@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Icon Generator</title></head>
+<body style="background:#111;color:#fff;font-family:sans-serif;padding:20px">
+<h2>Runner Simulator — Icon Generator</h2>
+<canvas id="c" width="512" height="512" style="border:1px solid #333;display:block;margin-bottom:12px"></canvas>
+<button id="dl180" style="margin-right:8px;padding:8px 16px">Download icon-180.png (iOS)</button>
+<button id="dl512" style="padding:8px 16px">Download icon-512.png (Android)</button>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+// Background
+const grad = ctx.createLinearGradient(0, 0, 512, 512);
+grad.addColorStop(0, '#1a1a3e');
+grad.addColorStop(1, '#0d0d1a');
+ctx.fillStyle = grad;
+ctx.roundRect(0, 0, 512, 512, 80);
+ctx.fill();
+
+// Subtle diamond
+ctx.fillStyle = 'rgba(255,107,0,0.12)';
+ctx.beginPath();
+ctx.moveTo(256, 70);
+ctx.lineTo(370, 180);
+ctx.lineTo(256, 290);
+ctx.lineTo(142, 180);
+ctx.closePath();
+ctx.fill();
+
+// R
+ctx.fillStyle = '#ff6b00';
+ctx.font = '900 270px "Arial Black", Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'alphabetic';
+ctx.fillText('R', 256, 345);
+
+// RUNNER text
+ctx.fillStyle = 'rgba(255,255,255,0.65)';
+ctx.font = '700 60px Arial';
+ctx.letterSpacing = '8px';
+ctx.fillText('RUNNER', 256, 450);
+
+function download(size, filename) {
+  const small = document.createElement('canvas');
+  small.width = size; small.height = size;
+  small.getContext('2d').drawImage(canvas, 0, 0, size, size);
+  const a = document.createElement('a');
+  a.download = filename;
+  a.href = small.toDataURL('image/png');
+  a.click();
+}
+
+document.getElementById('dl180').onclick = () => download(180, 'icon-180.png');
+document.getElementById('dl512').onclick = () => download(512, 'icon-512.png');
+</script>
+</body>
+</html>
