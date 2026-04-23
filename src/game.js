@@ -1,12 +1,17 @@
 import scenarios from './scenarios.js';
 import { sfxCorrect, sfxWrong } from './sound.js';
 
+const QUIZ_COUNT = 5;
+let activeScenarios = [];
 let currentIndex = 0;
 let totalScore = 0;
 let scoreLog = [];
-let timerInterval = null;
-let timeLeft = 0;
 let answered = false;
+
+function pickScenarios() {
+  const shuffled = [...scenarios].sort(() => Math.random() - 0.5);
+  activeScenarios = shuffled.slice(0, QUIZ_COUNT);
+}
 
 const screens = {
   start: document.getElementById('start-screen'),
@@ -23,19 +28,20 @@ function startGame() {
   currentIndex = 0;
   totalScore = 0;
   scoreLog = [];
+  pickScenarios();
   showScreen('game');
   loadScenario();
 }
 
 function loadScenario() {
   answered = false;
-  const s = scenarios[currentIndex];
+  const s = activeScenarios[currentIndex];
 
   // Progress
-  const pct = (currentIndex / scenarios.length) * 100;
+  const pct = (currentIndex / activeScenarios.length) * 100;
   document.querySelector('.progress-bar').style.width = pct + '%';
   document.querySelector('.scenario-num').textContent =
-    `${currentIndex + 1} / ${scenarios.length}`;
+    `${currentIndex + 1} / ${activeScenarios.length}`;
   document.querySelector('.score-display').textContent = `スコア: ${totalScore}`;
 
   // Scenario content
@@ -54,80 +60,22 @@ function loadScenario() {
     choicesEl.appendChild(btn);
   });
 
-  // Reset feedback / next button / timeout
+  // Reset feedback / next button
   document.getElementById('feedback-box').style.display = 'none';
   document.getElementById('btn-next').style.display = 'none';
-  document.getElementById('timeout-msg').style.display = 'none';
-
-  // Timer
-  timeLeft = s.timeLimit;
-  updateTimerUI();
-  clearInterval(timerInterval);
-  timerInterval = setInterval(tickTimer, 100);
-}
-
-function tickTimer() {
-  timeLeft -= 0.1;
-  updateTimerUI();
-  if (timeLeft <= 0) {
-    clearInterval(timerInterval);
-    timeLeft = 0;
-    updateTimerUI();
-    onTimeout();
-  }
-}
-
-function updateTimerUI() {
-  const s = scenarios[currentIndex];
-  const pct = Math.max(0, (timeLeft / s.timeLimit) * 100);
-  const bar = document.getElementById('timer-bar');
-  const num = document.getElementById('timer-num');
-  bar.style.width = pct + '%';
-  num.textContent = Math.ceil(timeLeft);
-
-  bar.classList.remove('warning', 'danger');
-  if (pct <= 30) bar.classList.add('danger');
-  else if (pct <= 60) bar.classList.add('warning');
-}
-
-function onTimeout() {
-  if (answered) return;
-  answered = true;
-  sfxWrong();
-
-  // Disable all buttons
-  document.querySelectorAll('.choice-btn').forEach(btn => {
-    btn.disabled = true;
-    btn.classList.add('wrong');
-  });
-
-  document.getElementById('timeout-msg').style.display = 'block';
-
-  const feedback = document.getElementById('feedback-box');
-  feedback.innerHTML = '<div class="points">+0pt（時間切れ）</div>時間内に判断できませんでした。現場では素早い判断が求められます。';
-  feedback.style.display = 'block';
-
-  scoreLog.push({ title: scenarios[currentIndex].title, score: 0, timeout: true });
-
-  document.getElementById('btn-next').style.display = 'block';
 }
 
 function selectChoice(choiceIndex) {
   if (answered) return;
   answered = true;
-  clearInterval(timerInterval);
 
-  const s = scenarios[currentIndex];
+  const s = activeScenarios[currentIndex];
   const chosen = s.choices[choiceIndex];
   const maxScore = Math.max(...s.choices.map(c => c.score));
-
-  // Speed bonus: up to +20 pts if answered quickly
-  const timeRatio = timeLeft / s.timeLimit;
-  const speedBonus = chosen.score === maxScore ? Math.round(timeRatio * 20) : 0;
-  const earned = chosen.score + speedBonus;
+  const earned = chosen.score;
 
   totalScore += earned;
-  scoreLog.push({ title: s.title, score: earned, timeout: false });
+  scoreLog.push({ title: s.title, score: earned });
 
   // Style buttons
   document.querySelectorAll('.choice-btn').forEach((btn, i) => {
@@ -145,8 +93,7 @@ function selectChoice(choiceIndex) {
 
   // Feedback
   const feedback = document.getElementById('feedback-box');
-  const speedText = speedBonus > 0 ? `<span style="color:#4caf50"> + スピードボーナス +${speedBonus}pt</span>` : '';
-  feedback.innerHTML = `<div class="points">+${chosen.score}pt${speedText}</div>${chosen.feedback}`;
+  feedback.innerHTML = `<div class="points">+${chosen.score}pt</div>${chosen.feedback}`;
   feedback.style.display = 'block';
 
   document.querySelector('.score-display').textContent = `スコア: ${totalScore}`;
@@ -155,7 +102,7 @@ function selectChoice(choiceIndex) {
 
 function nextScenario() {
   currentIndex++;
-  if (currentIndex >= scenarios.length) {
+  if (currentIndex >= activeScenarios.length) {
     showResult();
   } else {
     loadScenario();
@@ -165,8 +112,8 @@ function nextScenario() {
 function showResult() {
   showScreen('result');
 
-  const maxPossible = scenarios.reduce((sum, s) => {
-    return sum + Math.max(...s.choices.map(c => c.score)) + 20;
+  const maxPossible = activeScenarios.reduce((sum, s) => {
+    return sum + Math.max(...s.choices.map(c => c.score));
   }, 0);
 
   const pct = totalScore / maxPossible;
@@ -186,7 +133,7 @@ function showResult() {
   scoreLog.forEach(item => {
     const div = document.createElement('div');
     div.className = 'breakdown-item';
-    div.innerHTML = `<span>${item.title}</span><span class="pts">${item.timeout ? '時間切れ' : '+' + item.score + 'pt'}</span>`;
+    div.innerHTML = `<span>${item.title}</span><span class="pts">+${item.score}pt</span>`;
     breakdown.appendChild(div);
   });
 }
