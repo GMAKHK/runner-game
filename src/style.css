@@ -526,6 +526,25 @@ body {
   box-shadow: 0 0 28px rgba(239,68,68,0.65), 0 6px 16px rgba(0,0,0,0.4);
 }
 
+.btn-auto {
+  background: linear-gradient(135deg, #0e7490, #155e75);
+  color: #a5f3fc;
+  border: none;
+  padding: 16px 18px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(14,116,144,0.4), 0 4px 12px rgba(0,0,0,0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: fadeDown 0.9s ease 0.4s both;
+}
+.btn-auto:hover {
+  transform: scale(1.06) translateY(-2px);
+  box-shadow: 0 0 28px rgba(14,116,144,0.65), 0 6px 16px rgba(0,0,0,0.4);
+}
+
 /* KDSヘッダー内のモードバッジ */
 .kds-mode-badge {
   background: linear-gradient(135deg, #ef4444, #b91c1c);

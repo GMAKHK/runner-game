@@ -1,5 +1,5 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.0.8';
+const APP_VERSION = 'v1.0.9';
 document.getElementById('title-version').textContent = APP_VERSION;
 
 import { sfxPotatoDone, sfxPresent, sfxCallMgr, sfxWait, sfxChaser,
@@ -94,6 +94,8 @@ let expertMode           = false; // エキスパートモード (客数 1.5倍)
 let dangerActive         = false; // デンジャーコール発動中
 let tutorialMode         = false; // チュートリアルモード
 let tutorialFreePlay     = false; // チュートリアル自由プレイ中（オーダー自動スポーン許可）
+let autoPlayMode         = false; // オートプレイモード
+let autoBotInterval      = null;  // ボットのtickタイマー
 
 // ── Potato State ─────────────────────────────────────────────────────────────
 // potatoStock[size] = バッチ配列: { qty: number, expiresAt: ms }
@@ -1410,7 +1412,12 @@ function startKDS(expert = false) {
   const badge = document.getElementById('kds-mode-badge');
   badge.style.background = '';
   badge.style.color      = '';
-  if (expertMode) {
+  if (autoPlayMode) {
+    badge.textContent      = 'AUTO';
+    badge.style.display    = 'inline-block';
+    badge.style.background = '#0e7490';
+    badge.style.color      = '#a5f3fc';
+  } else if (expertMode) {
     badge.textContent   = 'EXPERT';
     badge.style.display = 'inline-block';
   } else {
@@ -1437,6 +1444,7 @@ function triggerGameOver(reason) {
   if (!gameRunning) return;
   gameOverReason = reason;
   gameRunning = false;
+  stopAutoPlay();
   clearInterval(tickInterval);
   clearTimeout(spawnTimer);
 
@@ -1581,6 +1589,7 @@ function spawnTutorialOrder(menuItems) {
 
 function endGame() {
   gameRunning = false;
+  stopAutoPlay();
   clearInterval(tickInterval);
   clearTimeout(spawnTimer);
   showResult();
@@ -1833,6 +1842,77 @@ function showResult() {
                      <span class="pts ${ttsCls}">${o.tts !== null ? `ⓣⓣⓢ ${Math.round(o.tts)}s` : 'ⓣⓣⓢ --'}</span>`;
     bd.appendChild(div);
   });
+
+}
+
+// ── AUTO PLAY BOT ────────────────────────────────────────────────────────────
+
+function startAutoPlay() {
+  autoPlayMode = true;
+  expertMode   = false;
+  startKDS();
+  clearInterval(autoBotInterval);
+  // 初回アクションまで少し待ってからスタート
+  autoBotInterval = setInterval(autoBotTick, 900);
+}
+
+function stopAutoPlay() {
+  autoPlayMode = false;
+  clearInterval(autoBotInterval);
+  autoBotInterval = null;
+}
+
+function autoBotTick() {
+  if (!gameRunning || !autoPlayMode) return;
+  const now = Date.now();
+
+  // ① MGR: WAIT済みオーダーのサンドが完成していたら呼ぶ
+  if (now >= mgrCooldownUntil && now >= presentCooldownUntil) {
+    for (const order of orders) {
+      if (!order.waited || order.presented) continue;
+      const sandwichesReady = order.items.every(i => !i.isSandwich || i.ready);
+      if (sandwichesReady) { callMgr(order.id); return; }
+    }
+  }
+
+  // ② PRESENT: 全アイテム準備完了 → FIFO順に提供
+  if (now >= presentCooldownUntil) {
+    const ready = orders
+      .filter(o => !o.waited && !o.presented && o.items.every(i => i.ready))
+      .sort((a, b) => a.receiptTime - b.receiptTime);
+    if (ready.length > 0) { presentOrder(ready[0].id); return; }
+  }
+
+  // ③ WAIT: 受注から110秒超えてまだ準備できていないオーダー
+  const atRisk = orders
+    .filter(o => !o.waited && !o.presented && (now - o.receiptTime) / 1000 > 110)
+    .sort((a, b) => a.receiptTime - b.receiptTime);
+  if (atRisk.length > 0) { waitOrder(atRisk[0].id); return; }
+
+  // ④ DANGER: 滞留サンド6個以上
+  if (!dangerActive && countPendingSandwiches() >= 6) { activateDanger(); return; }
+
+  // ⑤ CHASER: 受注60秒超・makingNowに対象サンドあり・チェイサー未使用・準備済みオーダーなし
+  if (chaserOrderId === null) {
+    const readyCount = orders.filter(o => o.items.every(i => i.ready)).length;
+    if (readyCount === 0) {
+      const chaserTarget = orders.find(o => {
+        if (o.chased || o.presented || o.waited) return false;
+        if ((now - o.receiptTime) / 1000 < 60) return false;
+        return makingNow.some(m => m.orderId === o.id);
+      });
+      if (chaserTarget) { chaserOrder(chaserTarget.id); return; }
+    }
+  }
+
+  // ⑥ FRYER: 在庫が需要＋2を下回ったら空きフライヤーを起動
+  const demand = orders.reduce((s, o) =>
+    s + o.items.filter(i => i.potatoSize && !i.ready).length, 0);
+  const stock = stockCount('S') + stockCount('M') + stockCount('L');
+  if (stock < demand + 2) {
+    const emptyIdx = fryers.findIndex(f => f.phase === 'empty');
+    if (emptyIdx >= 0) { startFryer(emptyIdx); return; }
+  }
 }
 
 // ── event delegation ─────────────────────────────────────────────────────────
@@ -1883,6 +1963,7 @@ function goHome() {
   gameRunning      = false;
   tutorialMode     = false;
   tutorialFreePlay = false;
+  stopAutoPlay();
   clearInterval(tickInterval);
   clearTimeout(spawnTimer);
   // チュートリアルオーバーレイを非表示
@@ -1896,6 +1977,7 @@ function goHome() {
 
 document.getElementById('btn-kds-start').addEventListener('click',        () => startKDS(false));
 document.getElementById('btn-kds-expert').addEventListener('click',       () => startKDS(true));
+document.getElementById('btn-kds-auto').addEventListener('click',         () => startAutoPlay());
 document.getElementById('btn-kds-tutorial').addEventListener('click',     () => {
   startTutorial();
   window.kdsApi.onTutorialStart?.();
