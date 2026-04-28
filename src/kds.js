@@ -1,8 +1,8 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.1.0';
+const APP_VERSION = 'v1.2.6';
 document.getElementById('title-version').textContent = APP_VERSION;
 
-import { sfxPotatoDone, sfxPresent, sfxCallMgr, sfxWait, sfxChaser,
+import { sfxPotatoDone, sfxPresent, sfxWait, sfxChaser,
          setVolume, getVolume, setSfxEnabled, getSfxEnabled } from './sound.js';
 
 const CATEGORY = { SAND: 0, POTATO: 1, DRINK: 2, CONDIMENT: 3 };
@@ -29,6 +29,9 @@ const MENU = [
 ];
 
 const GAME_DURATION  = 600;
+const SOK_COUNT      = 4;   // SOK台数
+const SOK_TIME_MIN   = 12;  // SOK操作時間 最短(秒)
+const SOK_TIME_MAX   = 30;  // SOK操作時間 最長(秒)
 
 const TTS_GREEN      = 51;   // <51s (≤50s) → good
 const TTS_YELLOW     = 51;   // カード警告色の開始
@@ -87,8 +90,9 @@ let ordersSpawned     = 0;
 let potatoDiscarded      = 0; // 廃棄されたポテト個数
 let potatoConvertCount   = 0; // ポテト再製造(変換)回数
 let waitCount            = 0; // WAIT押下回数
+let waitCooldownUntil    = 0; // WAIT後クーリング終了時刻(ms)
+let waitCooldownStart    = 0; // WAIT後クーリング開始時刻(ms)
 let presentCooldownUntil = 0; // PRESENT後クーリング終了時刻(ms)
-let mgrCooldownUntil     = 0; // MGR後クーリング終了時刻(ms)
 let gameOverReason       = null; // GAME OVER 発生理由 (null = 通常終了)
 let expertMode           = false; // エキスパートモード (客数 1.5倍)
 let dangerActive         = false; // デンジャーコール発動中
@@ -96,6 +100,7 @@ let tutorialMode         = false; // チュートリアルモード
 let tutorialFreePlay     = false; // チュートリアル自由プレイ中（オーダー自動スポーン許可）
 let autoPlayMode         = false; // オートプレイモード
 let autoBotInterval      = null;  // ボットのtickタイマー
+let sokSlots             = [];    // SOKキュー: { order, timeLeft } or null
 
 // ── Potato State ─────────────────────────────────────────────────────────────
 // potatoStock[size] = バッチ配列: { qty: number, expiresAt: ms }
@@ -201,13 +206,9 @@ function makeOrder(forceHeavySand = false, includeFrappe = false) {
     } else if (m.category === CATEGORY.SAND) {
       readyAt = Infinity; // ナゲット等: キッチン順番待ち
     } else if (m.category === CATEGORY.POTATO) {
-      // ポテトはストックから引き当て。在庫があればバギング8秒、なければ無限待ち
+      // ポテトのストック引き当てはKDS流入時(spawnToKDS)で行う
       potatoSize = m.name.slice(-1); // 'S' | 'M' | 'L'
-      if (consumeStock(potatoSize)) {
-        readyAt = now + POTATO_BAG_TIME * 1000;
-      } else {
-        readyAt = Infinity; // ストック補充まで待機
-      }
+      readyAt = Infinity;
     } else {
       readyAt = now + Math.max(3, m.prepTime) * 1000;
     }
@@ -265,6 +266,7 @@ function makeOrder(forceHeavySand = false, includeFrappe = false) {
     r2p:           null,
     allReadyAt:    null, // 全アイテム完了時刻
     lagSec:        null, // 完了→プレゼントまでの秒数
+    source:        'SOK', // 'SOK' | 'MOP'
   };
 }
 
@@ -276,11 +278,53 @@ function spawnOrder() {
   // 7オーダーに1回フローズンドリンクを注入 (重量オーダーとずらして offset=3)
   const includeFrappe = (ordersSpawned % 7 === 3);
   const order = makeOrder(forceHeavy, includeFrappe);
-  orders.push(order);
   ordersSpawned++;
 
-  enqueueOrderSandwiches(order);
+  // 30%の確率でMOP（モバイルオーダー）→ SOKインジケーターなしで直接KDS流入
+  const isMOP = Math.random() < 0.30;
+  if (isMOP) {
+    order.source = 'MOP';
+    spawnToKDS(order);
+  } else {
+    order.source = 'SOK';
+    // 空きSOKスロットに入れる。満席なら直接KDSへ
+    const freeIdx = sokSlots.findIndex(s => s === null);
+    if (freeIdx >= 0) {
+      sokSlots[freeIdx] = { order, timeLeft: rand(SOK_TIME_MIN, SOK_TIME_MAX) };
+      renderSOKIndicator();
+    } else {
+      spawnToKDS(order);
+    }
+  }
+
   scheduleNext();
+}
+
+function spawnToKDS(order) {
+  const now = Date.now();
+  // ポテトのストック引き当てをKDS流入時点で実行
+  order.items.forEach(item => {
+    if (item.potatoSize && item.readyAt === Infinity) {
+      if (consumeStock(item.potatoSize)) {
+        item.readyAt = now + POTATO_BAG_TIME * 1000;
+      }
+      // 在庫なし → readyAt = Infinity のまま (fulfillPotatoWaiting が後で対応)
+    }
+  });
+  orders.push(order);
+  enqueueOrderSandwiches(order);
+  renderOrders();
+}
+
+function renderSOKIndicator() {
+  const el = document.getElementById('sok-slots');
+  if (!el) return;
+  el.innerHTML = sokSlots.map(slot => {
+    if (!slot) return `<div class="sok-slot empty">○</div>`;
+    const sec = Math.ceil(slot.timeLeft);
+    const cls = sec <= 6 ? 'imminent' : 'active';
+    return `<div class="sok-slot ${cls}">${sec}</div>`;
+  }).join('');
 }
 
 function scheduleNext() {
@@ -289,8 +333,8 @@ function scheduleNext() {
 
   let delay;
   if (inBurst && burstLeft > 0) {
-    // ラッシュ中
-    delay = expertMode ? rand(7, 13) * 1000 : rand(10, 20) * 1000;
+    // ラッシュ中: SOKに溜まるよう短めに詰める
+    delay = expertMode ? rand(4, 9) * 1000 : rand(5, 12) * 1000;
     burstLeft--;
     if (burstLeft === 0) inBurst = false;
   } else {
@@ -312,9 +356,13 @@ function scheduleNext() {
 function waitOrder(id) {
   const order = orders.find(o => o.id === id);
   if (!order || order.presented || order.waited) return;
+  if (Date.now() < waitCooldownUntil) return;
 
+  const now      = Date.now();
+  waitCooldownStart = now;
+  waitCooldownUntil = now + 8 * 1000;
   order.waited   = true;
-  order.waitedAt = Date.now();
+  order.waitedAt = now;
   waitCount++;
   sfxWait();
   // R2P凍結: WAIT押下時点のTTS + 40秒配達時間
@@ -423,36 +471,6 @@ function refreshDangerPipeline() {
   drainMakeQueue();      // 空きスロットを最大6まで補充
 }
 
-function callMgr(id) {
-  // WAITオーダーのサンドが完成したらMGRに取り揃えを依頼して処理完了とみなす
-  const order = orders.find(o => o.id === id);
-  if (!order || !order.waited || order.presented) return;
-  // クーリングタイム中は無効
-  if (Date.now() < mgrCooldownUntil || Date.now() < presentCooldownUntil) return;
-  // サンドが完成しているかチェック
-  const sandwichesReady = order.items.every(i => !i.isSandwich || i.ready);
-  if (!sandwichesReady) return;
-
-  const now         = Date.now();
-  mgrCooldownUntil  = now + 15 * 1000;
-  sfxCallMgr();
-  order.presented   = true;
-  order.presentTime = now;
-  // TTS = 受注 → 最後のサンド完成 or チェイサー引き継ぎ (サンドなしは計測なし)
-  order.tts         = order.ttsAt ? (order.ttsAt - order.receiptTime) / 1000 : null;
-  // R2P(WAIT) = 受注 → WAIT押下 + 10秒
-  order.r2p         = (order.waitedAt - order.receiptTime) / 1000 + 10;
-  order.lagSec      = order.allReadyAt ? (now - order.allReadyAt) / 1000 : 0;
-
-  if (chaserOrderId === id) chaserOrderId = null;
-  presented.push(order);
-  orders = orders.filter(o => o.id !== id);
-
-  updateMetrics();
-  refreshDangerPipeline();
-  renderOrders();
-  showToast(order.r2p);
-}
 
 function presentOrder(id) {
   const order = orders.find(o => o.id === id);
@@ -462,7 +480,7 @@ function presentOrder(id) {
   if (Date.now() < presentCooldownUntil) return;
 
   const now              = Date.now();
-  presentCooldownUntil   = now + 7 * 1000;
+  presentCooldownUntil   = now + 8 * 1000;
   sfxPresent();
   order.presented   = true;
   order.presentTime = now;
@@ -508,20 +526,7 @@ function showToast(r2p) {
 // ── metrics ───────────────────────────────────────────────────────────────────
 
 function updateMetrics() {
-  const count = presented.length;
-  document.getElementById('kds-order-count').textContent = count;
-  if (count === 0) return;
-
-  const ttsOrders = presented.filter(o => o.tts !== null);
-  const avgTTS = ttsOrders.length > 0 ? ttsOrders.reduce((s, o) => s + o.tts, 0) / ttsOrders.length : null;
-  const avgR2P = presented.reduce((s, o) => s + o.r2p, 0) / count;
-  const sales  = presented.reduce((s, o) => s + o.total, 0);
-  const ac     = sales / count;
-
-  document.getElementById('kds-tts-avg').textContent   = avgTTS !== null ? fmtTime(avgTTS) : '--:--';
-  document.getElementById('kds-r2p-avg').textContent   = fmtTime(avgR2P);
-  document.getElementById('kds-sales-val').textContent = `¥${sales.toLocaleString()}`;
-  document.getElementById('kds-ac-val').textContent    = `¥${Math.round(ac).toLocaleString()}`;
+  // stats elements removed from header; nothing to update
 }
 
 // ── render ────────────────────────────────────────────────────────────────────
@@ -539,6 +544,7 @@ function buildCardHtml(order) {
   return `
     <div class="card-header">
       <span class="order-num">#${order.num}</span>
+      ${order.source === 'MOP' ? `<span class="mop-badge">MOP</span>` : ''}
       <span class="tts-counter">⏱ 00:00</span>
     </div>
     <div class="wait-badge" style="display:none"></div>
@@ -547,7 +553,6 @@ function buildCardHtml(order) {
       <div class="footer-actions">
         <button class="btn-wait" data-order-id="${order.id}">WAIT</button>
         <button class="btn-chaser" data-order-id="${order.id}" style="display:none">チェイサー</button>
-        <button class="btn-call-mgr" data-order-id="${order.id}" style="display:none">MGRを呼ぶ</button>
         <button class="btn-present" data-order-id="${order.id}" disabled>準備中...</button>
       </div>
     </div>`;
@@ -560,7 +565,6 @@ function updateCardDom(card, order, now, chaserEligibleId) {
   const badge      = card.querySelector('.wait-badge');
   const waitBtn    = card.querySelector('.btn-wait');
   const chaserBtn  = card.querySelector('.btn-chaser');
-  const mgrBtn     = card.querySelector('.btn-call-mgr');
   const btn        = card.querySelector('.btn-present');
 
   if (order.waited) {
@@ -589,19 +593,12 @@ function updateCardDom(card, order, now, chaserEligibleId) {
       badge.style.display = 'block';
     }
     if (waitBtn) waitBtn.style.display = 'none';
-    if (btn)     btn.style.display     = 'none';
 
     // チェイサーボタン: 厨房製造中の最古オーダーにのみ表示、デンジャー中は非表示
     if (chaserBtn) {
       const show = order.id === chaserEligibleId && chaserOrderId === null && !dangerActive;
       chaserBtn.style.display = show ? 'inline-block' : 'none';
     }
-
-    // MGRボタン: 全アイテム完了時のみ表示、デンジャー中は無効
-    if (mgrBtn && allReady && mgrBtn.style.display === 'none') {
-      mgrBtn.style.display = 'inline-block';
-    }
-    if (mgrBtn) mgrBtn.disabled = false;
 
   } else if (order.chased) {
     // ── チェイサー中: TTSは継続、キュー解放済み ───────────────
@@ -711,11 +708,10 @@ function updateCardDom(card, order, now, chaserEligibleId) {
     btn.textContent = 'PRESENT';
   }
 
-  // チェイサーアクティブ中はウエイト・プレゼント・MGRを全オーダーで非表示
+  // チェイサーアクティブ中はウエイト・プレゼントを全オーダーで非表示
   if (chaserOrderId !== null) {
     if (waitBtn) waitBtn.style.display = 'none';
     if (btn)     btn.style.display     = 'none';
-    if (mgrBtn)  mgrBtn.style.display  = 'none';
   } else {
     // チェイサー解除後はプレゼントボタンを常に復元（disabled状態でも表示する）
     if (btn) btn.style.display = '';
@@ -724,16 +720,12 @@ function updateCardDom(card, order, now, chaserEligibleId) {
   // ── クーリングタイム制御 ─────────────────────────────────────
   const nowMs = Date.now();
   const inPresentCool = nowMs < presentCooldownUntil;
-  const inMgrCool     = nowMs < mgrCooldownUntil;
 
-  // PRESENT クーリング中: wait/chaser/mgr/fryer(via renderPotatoStation)を無効化
+  // PRESENT クーリング中: wait/chaser/fryer(via renderPotatoStation)を無効化
   if (inPresentCool) {
     const remainP = Math.ceil((presentCooldownUntil - nowMs) / 1000);
     if (waitBtn)   { waitBtn.disabled   = true; waitBtn.style.opacity   = '0.4'; }
     if (chaserBtn) { chaserBtn.disabled = true; chaserBtn.style.opacity = '0.4'; }
-    if (mgrBtn && mgrBtn.style.display !== 'none') {
-      mgrBtn.disabled = true; mgrBtn.style.opacity = '0.4';
-    }
     // active クラス付き（準備完了済み）のボタンをクーリング中は無効化
     if (btn && btn.classList.contains('active')) {
       btn.textContent = `PRESENT (${remainP}s)`;
@@ -749,17 +741,18 @@ function updateCardDom(card, order, now, chaserEligibleId) {
     }
   }
 
-  // MGR クーリング中: MGRボタンを無効化
-  if (inMgrCool || inPresentCool) {
-    const remainM = Math.ceil((Math.max(mgrCooldownUntil, presentCooldownUntil) - nowMs) / 1000);
-    if (mgrBtn && mgrBtn.style.display !== 'none') {
-      mgrBtn.disabled = true; mgrBtn.style.opacity = '0.4';
-      mgrBtn.textContent = `MGRを呼ぶ (${remainM}s)`;
-    }
-  } else {
-    if (mgrBtn) {
-      mgrBtn.disabled = false; mgrBtn.style.opacity = '';
-      if (mgrBtn.textContent.startsWith('MGRを呼ぶ (')) mgrBtn.textContent = 'MGRを呼ぶ';
+  // WAIT クーリング: ゲージ塗りつぶし表示
+  const inWaitCool = nowMs < waitCooldownUntil;
+  if (waitBtn && waitBtn.style.display !== 'none' && !order.waited && chaserOrderId === null) {
+    if (inWaitCool) {
+      const pct = Math.min(100, (nowMs - waitCooldownStart) / 8000 * 100);
+      waitBtn.style.background = `linear-gradient(to right, #6366f155 ${pct.toFixed(1)}%, transparent ${pct.toFixed(1)}%)`;
+      waitBtn.style.borderColor = '#6366f1';
+      waitBtn.disabled = true;
+    } else {
+      waitBtn.style.background = '';
+      waitBtn.style.borderColor = '';
+      if (!inPresentCool) waitBtn.disabled = false;
     }
   }
 }
@@ -1205,7 +1198,7 @@ function renderPotatoStation() {
       const fryDisabled = chaserOrderId !== null || now < presentCooldownUntil;
       const fryBtnAttr  = fryDisabled ? ' disabled style="opacity:0.4"' : '';
       const newHtml = `
-        <div class="fryer-label">バット ${fryer.id + 1}</div>
+        <div class="fryer-idle-icon">🍟</div>
         <div class="fryer-next-size">→ ${nextSize} ×${BASKET_YIELD[nextSize]}</div>
         <button class="btn-fry-start" data-fryer="${fryer.id}"${fryBtnAttr}>調理開始</button>`;
       if (slot.dataset.state !== 'empty') {
@@ -1225,16 +1218,13 @@ function renderPotatoStation() {
       const total      = isFrying ? FRYER_FRY_TIME : FRYER_SALT_TIME;
       const pct        = Math.min(100, (elapsed / total) * 100);
       const remain     = Math.max(0, Math.ceil(total - elapsed));
-      const phaseLabel = isFrying ? '🔥 揚げ中' : '🧂 塩かけ中';
       const barClass   = isFrying ? 'fryer-bar frying' : 'fryer-bar salting';
 
       if (slot.dataset.state !== fryer.phase) {
         slot.className = `fryer-slot ${fryer.phase}`;
         slot.dataset.state = fryer.phase;
-        const sizeTag = fryer.size ? fryer.size : '?';
         slot.innerHTML = `
-          <div class="fryer-label">バット ${fryer.id + 1} <span class="fryer-size-tag">${sizeTag}</span></div>
-          <div class="fryer-phase-label">${phaseLabel}</div>
+          <div class="fryer-phase-icon">${isFrying ? '🔥' : '🧂'}</div>
           <div class="fryer-bar-bg"><div class="${barClass}" style="width:${pct}%"></div></div>
           <div class="fryer-remain">${remain}s</div>`;
       } else {
@@ -1242,8 +1232,6 @@ function renderPotatoStation() {
         if (bar) bar.style.width = pct + '%';
         const rem = slot.querySelector('.fryer-remain');
         if (rem) rem.textContent = remain + 's';
-        const pl = slot.querySelector('.fryer-phase-label');
-        if (pl) pl.textContent = phaseLabel;
       }
     }
   });
@@ -1295,6 +1283,19 @@ function renderPotatoStation() {
 function gameTick() {
   const now = Date.now();
 
+  // SOKカウントダウン: 0になったらKDSへ流す
+  let sokUpdated = false;
+  sokSlots.forEach((slot, i) => {
+    if (!slot) return;
+    slot.timeLeft -= 0.1;
+    sokUpdated = true;
+    if (slot.timeLeft <= 0) {
+      spawnToKDS(slot.order);
+      sokSlots[i] = null;
+    }
+  });
+  if (sokUpdated) renderSOKIndicator();
+
   // サンド以外のアイテム (ポテト・ドリンク) の完了チェック
   orders.forEach(order => {
     order.items.forEach(item => {
@@ -1321,8 +1322,8 @@ function gameTick() {
     // ② 未提供オーダーが受注から270秒経過
     const now270 = Date.now();
     if (orders.some(o => (now270 - o.receiptTime) / 1000 > 270)) { triggerGameOver('r2p270'); return; }
-    // ③ KDS上に未提供オーダーが同時滞留 (通常6件 / エキスパート10件)
-    if (orders.length >= (expertMode ? 10 : 6)) { triggerGameOver('backlog'); return; }
+    // ③ KDS上に未提供オーダーが同時滞留 12件以上
+    if (orders.length >= 12) { triggerGameOver('backlog'); return; }
 
     gameTimeLeft -= 0.1;
     if (gameTimeLeft <= 0) {
@@ -1384,20 +1385,20 @@ function startKDS(expert = false) {
   potatoDiscarded      = 0;
   potatoConvertCount   = 0;
   waitCount            = 0;
+  waitCooldownUntil    = 0;
+  waitCooldownStart    = 0;
   presentCooldownUntil = 0;
   mgrCooldownUntil     = 0;
   gameOverReason       = null;
   dangerActive         = false;
+  sokSlots             = new Array(SOK_COUNT).fill(null);
 
   initFryers();
 
   clearInterval(tickInterval);
   clearTimeout(spawnTimer);
 
-  ['kds-tts-avg', 'kds-r2p-avg'].forEach(id => document.getElementById(id).textContent = '--:--');
-  document.getElementById('kds-sales-val').textContent       = '¥0';
-  document.getElementById('kds-ac-val').textContent          = '--';
-  document.getElementById('kds-order-count').textContent     = '0';
+  renderSOKIndicator();
   document.getElementById('kds-feedback').style.opacity      = '0';
   document.getElementById('kds-countdown').textContent       = fmtTime(GAME_DURATION);
   updateDangerUI();
@@ -1437,7 +1438,7 @@ function startKDS(expert = false) {
 const GAME_OVER_MESSAGES = {
   potato:  '💀 GAME OVER — ポテト廃棄が4個に達しました。需要を読んだ調理計画が必要です。',
   r2p270:  '💀 GAME OVER — RtoPが270秒を超えるオーダーが発生しました。提供が遅すぎます。',
-  backlog: '💀 GAME OVER — KDS上に6件以上のオーダーが同時に滞留しました。ライン崩壊です。',
+  backlog: '💀 GAME OVER — KDS上に12件以上のオーダーが同時に滞留しました。ライン崩壊です。',
 };
 
 function triggerGameOver(reason) {
@@ -1521,6 +1522,8 @@ function startTutorial() {
   potatoDiscarded      = 0;
   potatoConvertCount   = 0;
   waitCount            = 0;
+  waitCooldownUntil    = 0;
+  waitCooldownStart    = 0;
   presentCooldownUntil = 0;
   mgrCooldownUntil     = 0;
   gameOverReason       = null;
@@ -1530,10 +1533,6 @@ function startTutorial() {
   clearInterval(tickInterval);
   clearTimeout(spawnTimer);
 
-  ['kds-tts-avg', 'kds-r2p-avg'].forEach(id => document.getElementById(id).textContent = '--:--');
-  document.getElementById('kds-sales-val').textContent     = '¥0';
-  document.getElementById('kds-ac-val').textContent        = '--';
-  document.getElementById('kds-order-count').textContent   = '0';
   document.getElementById('kds-feedback').style.opacity    = '0';
   document.getElementById('kds-countdown').textContent     = 'TUTORIAL';
 
@@ -1612,19 +1611,7 @@ function calcScore() {
   const sales = presented.reduce((s, o) => s + o.total, 0);
   score += Math.floor(sales / 10);
 
-  // WAIT 減点: 通常3回・エキスパート10回まで無料、以降は指数的に増加
-  const waitFreeLimit = expertMode ? 10 : 3;
-  const waitPenalty = waitCount > waitFreeLimit ? Math.round(30 * (Math.pow(2, waitCount - waitFreeLimit) - 1)) : 0;
-  score -= waitPenalty;
-
-  // 平均TTS > 平均R2P の場合は大幅ペナルティ (WAITを悪用した運用の検出)
-  const count_ = presented.length;
-  if (count_ > 0) {
-    const ttsOrders_ = presented.filter(o => o.tts !== null);
-    const avgTTS_ = ttsOrders_.length > 0 ? ttsOrders_.reduce((s, o) => s + o.tts, 0) / ttsOrders_.length : null;
-    const avgR2P_ = presented.reduce((s, o) => s + o.r2p, 0) / count_;
-    if (avgTTS_ !== null && avgTTS_ > avgR2P_) score -= 500;
-  }
+  // WAIT 減点なし
 
   // ポテト再製造(変換)ペナルティ: 1回 -20pt
   score -= potatoConvertCount * 20;
@@ -1679,9 +1666,6 @@ function showResult() {
 
   const ttsClass  = avgTTS === null ? '' : avgTTS < TTS_GREEN ? 'good' : avgTTS < TTS_RED ? 'ok' : 'bad';
   const r2pClass  = avgR2P < R2P_GREEN  ? 'good' : avgR2P < R2P_YELLOW  ? 'ok' : 'bad';
-  const waitFreeLimit = expertMode ? 10 : 3;
-  const waitPenalty   = waitCount > waitFreeLimit ? Math.round(30 * (Math.pow(2, waitCount - waitFreeLimit) - 1)) : 0;
-  const avgTtsOverR2p = avgTTS !== null && avgTTS > avgR2P;
 
   document.getElementById('kds-res-details').innerHTML = `
     <div class="res-metric"><span class="res-label">提供数</span>
@@ -1697,11 +1681,7 @@ function showResult() {
     <div class="res-metric"><span class="res-label">30分換算 予測提供数</span>
       <span class="res-val">${proj30} オーダー</span></div>
     <div class="res-metric"><span class="res-label">WAIT 件数</span>
-      <span class="res-val ${waitPenalty > 0 ? 'bad' : 'good'}">${waitCount} 回
-      ${waitPenalty > 0 ? `(-${waitPenalty}pt)` : `(${waitFreeLimit}回以内 — 減点なし)`}</span></div>
-    ${avgTtsOverR2p ? `
-    <div class="res-metric"><span class="res-label">⚠ 平均ⓣⓣⓢ > 平均RtoP</span>
-      <span class="res-val bad">WAIT過多による品質低下 (-500pt)</span></div>` : ''}
+      <span class="res-val">${waitCount} 回</span></div>
     <div class="res-metric"><span class="res-label">ポテト再製造</span>
       <span class="res-val ${potatoConvertCount > 0 ? 'bad' : 'good'}">${potatoConvertCount} 回
       ${potatoConvertCount > 0 ? `(-${potatoConvertCount * 20}pt)` : ''}</span></div>
@@ -1749,20 +1729,11 @@ function showResult() {
       feedbacks.push({ type: 'bad',  text: `平均ⓣⓣⓢ ${Math.round(avgTTS)}s — サンド製造に時間がかかっています。バンズ焼成のタイミングを前倒しにする、または詰まったときは積極的にチェイサーに入ることを意識しましょう。` });
   }
 
-  // WAIT 評価
-  const wfl = expertMode ? 10 : 3;
+  // WAIT 評価 (多用推奨)
   if (waitCount === 0)
-    feedbacks.push({ type: 'ok',  text: 'WAITを一度も使いませんでした。混雑時は適度にWAITを活用してラインを安定させましょう。' });
-  else if (waitCount <= wfl)
-    feedbacks.push({ type: 'good', text: `WAITの活用回数(${waitCount}回)は減点なしの範囲です。必要な場面に絞った判断ができています。` });
-  else if (waitCount <= wfl + 3)
-    feedbacks.push({ type: 'ok',   text: `WAIT回数(${waitCount}回)が減点ライン(${wfl}回)を超えています。本当に必要な場面に絞りましょう。` });
+    feedbacks.push({ type: 'ok',  text: 'WAITを一度も使いませんでした。バースト流入やMOPの突発流入時はWAITを積極的に活用してRtoPを確保しましょう。' });
   else
-    feedbacks.push({ type: 'bad',  text: `WAIT回数(${waitCount}回)が過剰です。WAITの多用はオペレーション全体に負荷をかけ、結果的にⓣⓣⓢが延びる原因になります。本当に必要な場面に絞りましょう。` });
-
-  // ⓣⓣⓢ > RtoP（WAIT悪用）
-  if (avgTtsOverR2p)
-    feedbacks.push({ type: 'bad',  text: '平均ⓣⓣⓢが平均RtoPを上回っています。WAITを多用してRtoPを短く見せても、実際の製造時間は短縮されていません。WAITは本来、製造が間に合わないときに使うものです。' });
+    feedbacks.push({ type: 'good', text: `WAIT ${waitCount}回活用 — WAITはラインを守る重要な手段です。顧客をお待たせする前に積極的に使うことでRtoPを安定させられます。` });
 
   // 製造完了→プレゼントまでのラグ
   if (avgLag > 10)
@@ -2036,6 +2007,17 @@ document.getElementById('potato-station-header').addEventListener('click', () =>
 }
 document.getElementById('btn-settings-close').addEventListener('click', () => {
   settingsModal.style.display = 'none';
+});
+
+const infoModal = document.getElementById('info-modal');
+document.getElementById('btn-info').addEventListener('click', () => {
+  infoModal.style.display = 'flex';
+});
+document.getElementById('btn-info-close').addEventListener('click', () => {
+  infoModal.style.display = 'none';
+});
+infoModal.addEventListener('click', e => {
+  if (e.target === infoModal) infoModal.style.display = 'none';
 });
 settingsModal.addEventListener('click', e => {
   if (e.target === settingsModal) settingsModal.style.display = 'none';

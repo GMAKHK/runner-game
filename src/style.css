@@ -158,13 +158,103 @@ body {
   animation: fadeDown 0.9s ease 0.5s both;
 }
 
-.title-version {
+.title-footer {
   position: relative;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   margin-top: 6px;
+}
+.title-version {
   font-size: 0.6rem;
   color: #2a2a3a;
-  text-align: center;
+}
+.btn-info {
+  background: none;
+  border: 1px solid #333;
+  color: #555;
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.btn-info:hover { color: #aaa; border-color: #666; }
+
+/* ── SOK インジケーター ── */
+.sok-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sok-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 0.05em;
+}
+.sok-slots {
+  display: flex;
+  gap: 4px;
+}
+.sok-slot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  transition: background 0.3s;
+}
+.sok-slot.empty {
+  background: rgba(255,255,255,0.05);
+  color: #333;
+  border: 1px solid #2a2a2a;
+}
+.sok-slot.active {
+  background: rgba(251,146,60,0.2);
+  color: #fb923c;
+  border: 1px solid rgba(251,146,60,0.4);
+}
+.sok-slot.imminent {
+  background: rgba(239,68,68,0.25);
+  color: #f87171;
+  border: 1px solid rgba(239,68,68,0.5);
+  animation: sokPulse 0.6s ease-in-out infinite alternate;
+}
+@keyframes sokPulse {
+  from { box-shadow: 0 0 4px rgba(239,68,68,0.3); }
+  to   { box-shadow: 0 0 12px rgba(239,68,68,0.7); }
+}
+
+/* ── INFO モーダル ── */
+.info-panel { max-width: 480px; max-height: 80vh; }
+.info-body {
+  overflow-y: auto;
+  max-height: calc(80vh - 60px);
+  padding: 16px;
+}
+.info-version { margin-bottom: 20px; }
+.info-ver-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ff6b00;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+.info-version ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.info-version li {
+  font-size: 0.8rem;
+  color: #ccc;
+  margin-bottom: 4px;
+  line-height: 1.5;
 }
 
 .title-disclaimer {
@@ -807,6 +897,16 @@ body {
   font-weight: bold;
   color: #fff;
 }
+.mop-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(139,92,246,0.25);
+  color: #a78bfa;
+  border: 1px solid rgba(139,92,246,0.4);
+  letter-spacing: 0.05em;
+}
 
 .tts-counter {
   font-size: 0.9rem;
@@ -882,11 +982,16 @@ body {
   background: transparent;
   color: #a78bfa;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.1s;
 }
 
-.btn-wait:hover {
+.btn-wait:not(:disabled):hover {
   background: #6366f133;
+}
+
+.btn-wait:disabled {
+  cursor: not-allowed;
+  color: #6366f199;
 }
 
 .wait-badge {
@@ -1028,16 +1133,17 @@ body {
 .potato-station {
   flex-shrink: 0;
   background: #111;
-  border-top: 2px solid #f59e0b;
-  padding: 10px 16px 12px;
+  border-top: 1px solid #f59e0b44;
+  padding: 6px 12px 8px;
   font-family: 'Courier New', monospace;
 }
 
 .potato-station-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-bottom: 8px;
+  gap: 6px;
+  margin-bottom: 6px;
   cursor: pointer;
   user-select: none;
 }
@@ -1045,9 +1151,9 @@ body {
 .potato-station-toggle {
   background: none;
   border: none;
-  color: #f59e0b;
-  font-size: 0.75rem;
-  padding: 0 4px;
+  color: #f59e0b88;
+  font-size: 0.65rem;
+  padding: 0 2px;
   cursor: pointer;
   transition: transform 0.2s ease;
   line-height: 1;
@@ -1062,86 +1168,78 @@ body {
 }
 
 .potato-station.collapsed {
-  padding-bottom: 8px;
+  padding-bottom: 4px;
 }
 
 .potato-station-title {
-  font-size: 0.8rem;
-  font-weight: bold;
-  color: #f59e0b;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: #f59e0b88;
+  letter-spacing: 0.5px;
 }
 
 .potato-station-body {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   align-items: flex-start;
 }
 
 /* ─ Fryer slots ─ */
 .fryer-row {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .fryer-slot {
-  width: 110px;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  width: 76px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-
-.fryer-slot.frying  { border-color: #f59e0b; }
-.fryer-slot.salting { border-color: #84cc16; }
-
-.fryer-label {
-  font-size: 0.68rem;
-  color: #777;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 4px;
 }
 
-.fryer-size-tag {
-  font-weight: bold;
-  color: #f59e0b;
-  font-size: 0.82rem;
+.fryer-slot.frying  { border-color: #f59e0b66; }
+.fryer-slot.salting { border-color: #84cc1666; }
+
+.fryer-idle-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.fryer-phase-icon {
+  font-size: 1.3rem;
+  line-height: 1;
 }
 
 .fryer-next-size {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: #f59e0b;
   opacity: 0.8;
 }
 
 .btn-fry-start {
-  padding: 5px 6px;
-  font-size: 0.74rem;
+  padding: 3px 6px;
+  font-size: 0.68rem;
   font-weight: bold;
   border-radius: 4px;
-  border: 1px solid #f59e0b;
+  border: 1px solid #f59e0b66;
   background: transparent;
   color: #f59e0b;
   cursor: pointer;
   transition: background 0.15s;
+  width: 100%;
 }
 
 .btn-fry-start:hover {
   background: #f59e0b22;
 }
 
-.fryer-phase-label {
-  font-size: 0.72rem;
-  color: #ddd;
-}
-
 .fryer-bar-bg {
+  width: 100%;
   height: 6px;
   background: #2a2a2a;
   border-radius: 3px;
@@ -1151,15 +1249,15 @@ body {
 .fryer-bar {
   height: 100%;
   border-radius: 3px;
+  transition: width 0.2s linear;
 }
 
 .fryer-bar.frying  { background: #f59e0b; }
 .fryer-bar.salting { background: #84cc16; }
 
 .fryer-remain {
-  font-size: 0.7rem;
-  color: #aaa;
-  text-align: right;
+  font-size: 0.65rem;
+  color: #888;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1779,18 +1877,17 @@ body {
   /* ポテトステーション: 常時表示・折りたたみなし */
   .potato-station-toggle { display: none; }
   .potato-station.collapsed .potato-station-body { display: flex !important; }
-  .potato-station.collapsed { padding: 5px 8px 7px; }
-  .potato-station { padding: 5px 8px 7px; }
+  .potato-station.collapsed { padding: 4px 8px 5px; }
+  .potato-station { padding: 4px 8px 5px; }
   .potato-station-header { margin-bottom: 4px; }
-  .potato-station-title  { font-size: 0.7rem; }
   .potato-station-body   { flex-direction: column; gap: 6px; }
-  .fryer-row   { gap: 6px; }
-  .fryer-slot  { width: 86px; padding: 4px 6px; gap: 3px; }
-  .fryer-label { font-size: 0.58rem; }
-  .btn-fry-start { padding: 3px 4px; font-size: 0.62rem; }
-  .fryer-phase-label { font-size: 0.6rem; }
+  .fryer-row   { gap: 5px; }
+  .fryer-slot  { width: 72px; padding: 4px 6px; gap: 3px; }
+  .fryer-idle-icon  { font-size: 1rem; }
+  .fryer-phase-icon { font-size: 1.1rem; }
+  .btn-fry-start { padding: 2px 4px; font-size: 0.62rem; }
   .fryer-remain { font-size: 0.58rem; }
-  .fryer-bar-bg { height: 4px; }
+  .fryer-bar-bg { height: 5px; }
   .stock-grid { gap: 5px; }
   .stock-box  { padding: 3px 5px; }
   .stock-size-label   { font-size: 0.62rem; }
@@ -1826,19 +1923,18 @@ body {
   }
 
   /* ポテトステーション: コンパクト・折りたたみあり・トグルボタン中央 */
-  .potato-station { padding: 3px 8px 5px; }
+  .potato-station { padding: 3px 8px 4px; }
   .potato-station.collapsed { padding: 2px 8px 2px; }
   .potato-station.collapsed .potato-station-header { margin-bottom: 0; }
-  .potato-station-header { margin-bottom: 3px; justify-content: center; gap: 8px; }
-  .potato-station-title  { font-size: 0.65rem; }
+  .potato-station-header { margin-bottom: 3px; }
   .potato-station-body   { flex-direction: row; gap: 8px; overflow-x: auto; }
   .fryer-row   { flex-shrink: 0; gap: 4px; }
-  .fryer-slot  { width: 76px; padding: 3px 5px; gap: 2px; }
-  .fryer-label { font-size: 0.52rem; }
+  .fryer-slot  { width: 68px; padding: 3px 5px; gap: 3px; }
+  .fryer-idle-icon  { font-size: 1rem; }
+  .fryer-phase-icon { font-size: 1.1rem; }
   .btn-fry-start { padding: 2px 3px; font-size: 0.56rem; }
-  .fryer-phase-label { font-size: 0.52rem; }
   .fryer-remain { font-size: 0.5rem; }
-  .fryer-bar-bg { height: 3px; }
+  .fryer-bar-bg { height: 4px; }
   .stock-grid { gap: 4px; }
   .stock-box  { padding: 2px 4px; }
   .stock-size-label   { font-size: 0.55rem; }

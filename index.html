@@ -39,7 +39,10 @@
 
       <div class="title-tagline">SPEED × ACCURACY × JUDGEMENT</div>
       <p class="title-disclaimer">本アプリは架空の店舗を舞台にした教育目的のシミュレーターです。実在する企業・システムとは一切関係ありません。</p>
-      <p class="title-version" id="title-version"></p>
+      <div class="title-footer">
+        <p class="title-version" id="title-version"></p>
+        <button class="btn-info" id="btn-info">ℹ INFO</button>
+      </div>
     </div>
 
     <!-- GAME SCREEN -->
@@ -96,26 +99,13 @@
       <button class="kds-brand" id="btn-kds-home">◆ RUNNER SIMULATOR</button>
       <span class="kds-mode-badge" id="kds-mode-badge" style="display:none">EXPERT</span>
       <button class="btn-danger-call" id="btn-danger">🚨 デンジャーコール</button>
-      <div class="kds-stats">
-        <div class="kds-stat">
-          <div class="kds-stat-label">ⓣⓣⓢ avg</div>
-          <div class="kds-stat-val" id="kds-tts-avg">--:--</div>
-        </div>
-        <div class="kds-stat">
-          <div class="kds-stat-label">RtoP avg</div>
-          <div class="kds-stat-val" id="kds-r2p-avg">--:--</div>
-        </div>
-        <div class="kds-stat">
-          <div class="kds-stat-label">Sales</div>
-          <div class="kds-stat-val" id="kds-sales-val">¥0</div>
-        </div>
-        <div class="kds-stat">
-          <div class="kds-stat-label">AC</div>
-          <div class="kds-stat-val" id="kds-ac-val">--</div>
-        </div>
-        <div class="kds-stat">
-          <div class="kds-stat-label">Orders</div>
-          <div class="kds-stat-val" id="kds-order-count">0</div>
+      <div class="sok-indicator">
+        <div class="sok-label">SOK</div>
+        <div class="sok-slots" id="sok-slots">
+          <div class="sok-slot empty">○</div>
+          <div class="sok-slot empty">○</div>
+          <div class="sok-slot empty">○</div>
+          <div class="sok-slot empty">○</div>
         </div>
       </div>
       <div class="kds-countdown-wrap">
@@ -130,7 +120,7 @@
     <!-- Potato Station -->
     <div class="potato-station" id="potato-station">
       <div class="potato-station-header" id="potato-station-header">
-        <span class="potato-station-title">🍟 ポテトステーション</span>
+        <span class="potato-station-title">🍟</span>
         <button class="potato-station-toggle" id="btn-potato-toggle">▼</button>
       </div>
       <div class="potato-station-body">
@@ -165,6 +155,67 @@
     <div id="gameover-splash-bg"></div>
     <div id="gameover-splash-content"></div>
     <div id="gameover-splash-label"></div>
+  </div>
+
+  <!-- INFO MODAL -->
+  <div id="info-modal" class="settings-overlay" style="display:none">
+    <div class="settings-panel info-panel">
+      <div class="settings-header">
+        <span>アップデート履歴</span>
+        <button class="settings-close" id="btn-info-close">✕</button>
+      </div>
+      <div class="settings-body info-body">
+        <div class="info-version">
+          <div class="info-ver-tag">v1.2.5</div>
+          <ul>
+            <li>KDSヘッダーのスコア表示を全廃止（シンプル化）</li>
+          </ul>
+        </div>
+        <div class="info-version">
+          <div class="info-ver-tag">v1.2.0</div>
+          <ul>
+            <li>SOKインジケーター実装（4台の注文状況をリアルタイム表示）</li>
+            <li>バースト流入パターン刷新（SOKキュー経由でKDSに流入）</li>
+          </ul>
+        </div>
+        <div class="info-version">
+          <div class="info-ver-tag">v1.1.0</div>
+          <ul>
+            <li>ホームUI改善（NORMAL / EXPERT / AUTO / TUTORIAL）</li>
+            <li>タイトルをRUNNER SIMULATORに変更</li>
+          </ul>
+        </div>
+        <div class="info-version">
+          <div class="info-ver-tag">v1.0.9</div>
+          <ul>
+            <li>オートプレイモード（AUTO）追加</li>
+          </ul>
+        </div>
+        <div class="info-version">
+          <div class="info-ver-tag">v1.0.8</div>
+          <ul>
+            <li>クイズシナリオ21問に増量・毎回ランダム5問出題</li>
+            <li>クイズの時間制限を撤廃</li>
+            <li>ノーマルモード初期ポテトストック調整（S3 M5 L3）</li>
+          </ul>
+        </div>
+        <div class="info-version">
+          <div class="info-ver-tag">v1.0.7</div>
+          <ul>
+            <li>リザルトフィードバック最大5件・優先度順表示</li>
+          </ul>
+        </div>
+        <div class="info-version">
+          <div class="info-ver-tag">v1.0.6 以前</div>
+          <ul>
+            <li>チュートリアルモード実装（16ステップ）</li>
+            <li>スマホ対応（縦・横レイアウト）</li>
+            <li>PWA化（オフライン対応・ホーム画面追加）</li>
+            <li>ポテトステーション折りたたみ・スワイプ操作</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- SETTINGS MODAL -->
