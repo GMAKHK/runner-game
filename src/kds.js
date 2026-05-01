@@ -1,5 +1,5 @@
 // ── KDS Simulator — Runner Training ─────────────────────────────────────────
-const APP_VERSION = 'v1.2.6';
+const APP_VERSION = 'v1.3.5';
 document.getElementById('title-version').textContent = APP_VERSION;
 
 import { sfxPotatoDone, sfxPresent, sfxWait, sfxChaser,
@@ -45,6 +45,9 @@ const R2P_GREEN      = R2P_GREAT;
 const R2P_YELLOW     = R2P_GOOD;
 
 // ── Potato / Fryer Constants ──────────────────────────────────────────────────
+
+const DRINK_SLOTS     = 2;   // 同時製造可能なドリンク数
+const DRINK_TIME      = 10;  // 1杯あたり製造時間(秒)
 
 const FRYER_COUNT     = 4;
 const FRYER_FRY_TIME  = 180;  // 揚げ時間 (秒)
@@ -108,6 +111,7 @@ let sokSlots             = [];    // SOKキュー: { order, timeLeft } or null
 let potatoStock = { S: [], M: [], L: [] };
 // fryer: { size: 'S'|'M'|'L'|null, phase: 'empty'|'frying'|'salting', phaseStart: ms }
 let fryers = [];
+let drinkQueue = []; // [{orderId, itemIdx}] — 製造スロット待ちドリンク
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -209,6 +213,8 @@ function makeOrder(forceHeavySand = false, includeFrappe = false) {
       // ポテトのストック引き当てはKDS流入時(spawnToKDS)で行う
       potatoSize = m.name.slice(-1); // 'S' | 'M' | 'L'
       readyAt = Infinity;
+    } else if (m.category === CATEGORY.DRINK) {
+      readyAt = Infinity; // drinkQueue 経由でスロット割り当て
     } else {
       readyAt = now + Math.max(3, m.prepTime) * 1000;
     }
@@ -233,7 +239,7 @@ function makeOrder(forceHeavySand = false, includeFrappe = false) {
       isSandwich: false,
       potatoSize: null,
       ready:      false,
-      readyAt:    now + 70 * 1000,
+      readyAt:    Infinity,
     });
   }
 
@@ -300,19 +306,40 @@ function spawnOrder() {
   scheduleNext();
 }
 
+function startNextDrinks() {
+  const now = Date.now();
+  let inFlight = orders.reduce((n, o) =>
+    n + o.items.filter(i => i.category === CATEGORY.DRINK && !i.ready && i.readyAt !== Infinity).length, 0);
+  while (inFlight < DRINK_SLOTS && drinkQueue.length > 0) {
+    const next  = drinkQueue.shift();
+    const order = orders.find(o => o.id === next.orderId);
+    if (!order) continue;
+    const item = order.items[next.itemIdx];
+    if (!item || item.ready) continue;
+    item.readyAt = now + next.prepTime * 1000;
+    inFlight++;
+  }
+}
+
 function spawnToKDS(order) {
   const now = Date.now();
   // ポテトのストック引き当てをKDS流入時点で実行
-  order.items.forEach(item => {
+  order.items.forEach((item, idx) => {
     if (item.potatoSize && item.readyAt === Infinity) {
       if (consumeStock(item.potatoSize)) {
         item.readyAt = now + POTATO_BAG_TIME * 1000;
       }
       // 在庫なし → readyAt = Infinity のまま (fulfillPotatoWaiting が後で対応)
     }
+    // ドリンクをキューに追加（フローズンは60秒）
+    if (item.category === CATEGORY.DRINK && item.readyAt === Infinity) {
+      const prepTime = item.name === 'フローズンドリンク' ? 60 : DRINK_TIME;
+      drinkQueue.push({ orderId: order.id, itemIdx: idx, prepTime });
+    }
   });
   orders.push(order);
   enqueueOrderSandwiches(order);
+  startNextDrinks();
   renderOrders();
 }
 
@@ -1180,9 +1207,7 @@ function renderPotatoStation() {
   const row = document.getElementById('fryer-row');
   if (!row) return;
 
-  const now    = Date.now();
-  const demand = calcPotatoDemand();
-  const nextSize = autoSelectSize();
+  const now = Date.now();
 
   // ── フライヤースロット ─────────────────────────────────────────
   fryers.forEach(fryer => {
@@ -1199,16 +1224,13 @@ function renderPotatoStation() {
       const fryBtnAttr  = fryDisabled ? ' disabled style="opacity:0.4"' : '';
       const newHtml = `
         <div class="fryer-idle-icon">🍟</div>
-        <div class="fryer-next-size">→ ${nextSize} ×${BASKET_YIELD[nextSize]}</div>
         <button class="btn-fry-start" data-fryer="${fryer.id}"${fryBtnAttr}>調理開始</button>`;
       if (slot.dataset.state !== 'empty') {
         slot.className = 'fryer-slot empty';
         slot.innerHTML = newHtml;
         slot.dataset.state = 'empty';
       } else {
-        // Update next-size label and fry button state
-        const nxt = slot.querySelector('.fryer-next-size');
-        if (nxt) nxt.textContent = `→ ${nextSize} ×${BASKET_YIELD[nextSize]}`;
+        // Update fry button state
         const fryBtn = slot.querySelector('.btn-fry-start');
         if (fryBtn) { fryBtn.disabled = fryDisabled; fryBtn.style.opacity = fryDisabled ? '0.4' : ''; }
       }
@@ -1241,16 +1263,12 @@ function renderPotatoStation() {
   if (!stockEl) return;
 
   const mkStock = (size) => {
-    const n   = stockCount(size);
-    const icons = n > 0
-      ? `<span class="stock-potato-icons">${'🍟'.repeat(Math.min(n, 8))}${n > 8 ? `<span class="stock-plus">+${n-8}</span>` : ''}</span>`
-      : `<span class="stock-zero">なし</span>`;
+    const n = stockCount(size);
     const expSec = nearestExpirySec(size);
-    let expiryHtml = '';
-    if (expSec !== null) {
-      const expClass = expSec <= 60 ? 'expiry-danger' : expSec <= 120 ? 'expiry-warn' : 'expiry-ok';
-      expiryHtml = `<div class="stock-expiry ${expClass}">廃棄 ${Math.ceil(expSec)}s</div>`;
-    }
+    const expClass = expSec !== null ? (expSec <= 60 ? 'expiry-danger' : expSec <= 120 ? 'expiry-warn' : 'expiry-ok') : '';
+    const expiryHtml = expSec !== null
+      ? `<span class="stock-expiry ${expClass}">${Math.ceil(expSec)}s</span>`
+      : '';
     const convDisabled = Date.now() < presentCooldownUntil ? ' disabled style="opacity:0.4"' : '';
     const convBtns = n > 0 ? ['S', 'M', 'L'].filter(t => t !== size).map(t => {
       const toCnt = Math.floor(n * POTATO_GRAM[size] / POTATO_GRAM[t]);
@@ -1260,21 +1278,20 @@ function renderPotatoStation() {
     }).join('') : '';
     return `
       <div class="stock-box">
-        <div class="stock-size-label">${size}</div>
-        ${icons}
-        ${expiryHtml}
-        ${convBtns ? `<div class="stock-conv-row">${convBtns}</div>` : ''}
+        <div class="stock-row">
+          <span class="stock-size-label">${size}</span>
+          <span class="stock-potato-icons">${n > 0 ? '🍟'.repeat(Math.min(n, 6)) + (n > 6 ? `<span class="stock-plus">+${n-6}</span>` : '') : '<span class="stock-zero">–</span>'}</span>
+          ${expiryHtml}
+          ${convBtns ? `<span class="stock-conv-row">${convBtns}</span>` : ''}
+        </div>
       </div>`;
   };
 
-  const dmTotal = demand.S + demand.M + demand.L;
   stockEl.innerHTML = `
     <div class="stock-grid">
-      ${mkStock('S')}${mkStock('M')}${mkStock('L')}
-    </div>
-    <div class="demand-summary">
-      📋 オーダー内ポテト: S:${demand.S} M:${demand.M} L:${demand.L}
-      ${dmTotal === 0 ? '' : `<span class="demand-total">計${dmTotal}個</span>`}
+      ${mkStock('S')}
+      ${mkStock('M')}
+      ${mkStock('L')}
     </div>`;
 }
 
@@ -1297,10 +1314,14 @@ function gameTick() {
   if (sokUpdated) renderSOKIndicator();
 
   // サンド以外のアイテム (ポテト・ドリンク) の完了チェック
+  let drinkCompleted = false;
   orders.forEach(order => {
     order.items.forEach(item => {
       if (item.isSandwich) return; // サンドは sandwichTick() が管理
-      if (!item.ready && item.readyAt !== Infinity && now >= item.readyAt) item.ready = true;
+      if (!item.ready && item.readyAt !== Infinity && now >= item.readyAt) {
+        item.ready = true;
+        if (item.category === CATEGORY.DRINK) drinkCompleted = true;
+      }
     });
     // 全アイテム完了した瞬間を記録
     if (!order.allReadyAt && order.items.every(i => i.ready)) {
@@ -1308,6 +1329,7 @@ function gameTick() {
     }
   });
 
+  if (drinkCompleted) startNextDrinks();
   sandwichTick();
   fryerTick();
 
@@ -1388,7 +1410,7 @@ function startKDS(expert = false) {
   waitCooldownUntil    = 0;
   waitCooldownStart    = 0;
   presentCooldownUntil = 0;
-  mgrCooldownUntil     = 0;
+  drinkQueue           = [];
   gameOverReason       = null;
   dangerActive         = false;
   sokSlots             = new Array(SOK_COUNT).fill(null);
@@ -1525,7 +1547,7 @@ function startTutorial() {
   waitCooldownUntil    = 0;
   waitCooldownStart    = 0;
   presentCooldownUntil = 0;
-  mgrCooldownUntil     = 0;
+  drinkQueue           = [];
   gameOverReason       = null;
   dangerActive         = false;
 
@@ -1696,8 +1718,6 @@ function showResult() {
   const avgLag = count > 0
     ? presented.reduce((s, o) => s + (o.lagSec ?? 0), 0) / count
     : 0;
-  const mgrUsed = presented.some(o => o.waited); // MGRボタン使用はwaitedオーダー
-
   // R2P 評価（5段階）
   if (count > 0) {
     const greatCount  = presented.filter(o => o.r2p <= R2P_GREAT).length;
@@ -1742,12 +1762,6 @@ function showResult() {
     feedbacks.push({ type: 'ok',   text: `完成→提供のラグが平均${Math.round(avgLag)}秒あります。完成に気づいたら素早く提供しましょう。` });
   else if (count > 0)
     feedbacks.push({ type: 'good', text: '完成したオーダーをすばやく提供できています。提供動作のタイミングが良好です。' });
-
-  // MGR活用フィードバック
-  if (waitCount > 0 && !mgrUsed)
-    feedbacks.push({ type: 'ok',   text: 'WAITオーダーにはMGRを呼ぶボタンが活用できます。PRESENTボタンには7秒のクーリングタイムがありますが、MGRボタンには別のクーリング(15秒)が適用されるため、連続提供を分散させるのに有効です。' });
-  if (mgrUsed)
-    feedbacks.push({ type: 'good', text: 'MGRボタンを活用できました。WAITオーダーをMGRに依頼することでPRESENTのクーリングを気にせず提供フローを回せます。' });
 
   // チェイサー評価
   const chaserUsedCount = presented.filter(o => o.chasedAt).length;
@@ -1837,19 +1851,10 @@ function autoBotTick() {
   if (!gameRunning || !autoPlayMode) return;
   const now = Date.now();
 
-  // ① MGR: WAIT済みオーダーのサンドが完成していたら呼ぶ
-  if (now >= mgrCooldownUntil && now >= presentCooldownUntil) {
-    for (const order of orders) {
-      if (!order.waited || order.presented) continue;
-      const sandwichesReady = order.items.every(i => !i.isSandwich || i.ready);
-      if (sandwichesReady) { callMgr(order.id); return; }
-    }
-  }
-
-  // ② PRESENT: 全アイテム準備完了 → FIFO順に提供
+  // ① PRESENT: 全アイテム準備完了 → FIFO順に提供（waited含む）
   if (now >= presentCooldownUntil) {
     const ready = orders
-      .filter(o => !o.waited && !o.presented && o.items.every(i => i.ready))
+      .filter(o => !o.presented && o.items.every(i => i.ready))
       .sort((a, b) => a.receiptTime - b.receiptTime);
     if (ready.length > 0) { presentOrder(ready[0].id); return; }
   }
@@ -1899,12 +1904,6 @@ document.getElementById('kds-grid').addEventListener('click', e => {
   if (chaserBtn) {
     const id = Number(chaserBtn.dataset.orderId);
     if (id) chaserOrder(id);
-    return;
-  }
-  const mgrBtn = e.target.closest('.btn-call-mgr');
-  if (mgrBtn) {
-    const id = Number(mgrBtn.dataset.orderId);
-    if (id) callMgr(id);
     return;
   }
   const btn = e.target.closest('.btn-present.active');

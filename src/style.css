@@ -689,6 +689,9 @@ body {
   background: #141414;
   border-bottom: 2px solid #ff6b00;
   padding: 10px 20px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
   flex-shrink: 0;
   gap: 16px;
   flex-wrap: wrap;
@@ -1269,43 +1272,40 @@ body {
 
 .stock-grid {
   display: flex;
-  gap: 10px;
-  margin-bottom: 6px;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .stock-box {
-  flex: 1;
-  background: #1a1a1a;
-  border: 1px solid #333;
-  border-radius: 6px;
-  padding: 6px 8px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+.stock-row {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 60px;
+  gap: 5px;
+  flex-wrap: wrap;
 }
 
 .stock-size-label {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: bold;
-  color: #aaa;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  color: #666;
+  width: 10px;
+  flex-shrink: 0;
 }
 
 .stock-potato-icons {
-  font-size: 1.4rem;
-  line-height: 1.2;
-  letter-spacing: -3px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0;
+  font-size: 1rem;
+  letter-spacing: -2px;
+  line-height: 1;
 }
 
 .stock-plus {
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   color: #f59e0b;
   letter-spacing: 0;
   vertical-align: middle;
@@ -1315,46 +1315,17 @@ body {
   font-size: 0.7rem;
   color: #ef4444;
   font-weight: bold;
-  padding: 4px 0;
-}
-
-.stock-count {
-  font-size: 0.78rem;
-  font-weight: bold;
-  color: #fff;
-}
-
-.stock-demand {
-  font-size: 0.68rem;
-  font-weight: bold;
-}
-
-.demand-ok       { color: #22c55e; }
-.demand-shortage { color: #ef4444; }
-.demand-none     { color: #555; }
-
-.demand-summary {
-  font-size: 0.72rem;
-  color: #888;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.demand-total {
-  color: #f59e0b;
-  font-weight: bold;
+  letter-spacing: 0;
 }
 
 .stock-expiry {
-  font-size: 0.65rem;
-  font-weight: bold;
-  margin-top: 2px;
+  font-size: 0.55rem;
+  color: #444;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
 }
-.expiry-ok     { color: #22c55e; }
-.expiry-warn   { color: #f59e0b; }
-.expiry-danger { color: #ef4444; animation: blink 0.5s ease-in-out infinite alternate; }
+.expiry-warn   { color: #f59e0b66; }
+.expiry-danger { color: #ef4444aa; animation: blink 0.5s ease-in-out infinite alternate; }
 
 @keyframes blink {
   from { opacity: 1; }
@@ -1363,9 +1334,8 @@ body {
 
 .stock-conv-row {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  margin-top: 4px;
+  gap: 3px;
+  margin-left: 2px;
 }
 
 .btn-potato-conv {
@@ -1795,6 +1765,21 @@ body {
 /* ===== MOBILE 共通 (縦横両方) ===== */
 @media (max-width: 768px) {
 
+  /* ── タッチ最適化: 全ボタン共通 ── */
+  button {
+    touch-action: manipulation;       /* タップ遅延300ms除去 */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  button:active {
+    transform: scale(0.94);
+    opacity: 0.75;
+    transition: transform 0.07s, opacity 0.07s;
+  }
+  .kds-grid {
+    -webkit-overflow-scrolling: touch;
+  }
+
   /* ── ホーム画面: 1画面に収める ── */
   #start-screen {
     min-height: 100dvh;
@@ -1823,29 +1808,33 @@ body {
   #kds-result-screen {
     padding: 16px;
     min-height: 100dvh;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   }
 
   /* ── オーダーカード ── */
   .order-card {
-    padding: 5px 6px;
+    padding: 6px 8px;
     gap: 4px;
     border-radius: 4px;
   }
   .card-header { margin-bottom: 0; }
-  .order-num   { font-size: 0.85rem; }
-  .tts-counter { font-size: 0.78rem; }
-  .item-list   { gap: 2px; font-size: 0.78rem; }
-  .item-list li { gap: 4px; }
-  .item-countdown { font-size: 0.68rem; min-width: 24px; }
-  .wait-badge  { padding: 1px 0 2px; font-size: 0.7rem; }
-  .card-footer { padding-top: 5px; margin-top: 0; }
+  .order-num   { font-size: 0.88rem; }
+  .tts-counter { font-size: 0.8rem; }
+  .item-list   { gap: 3px; font-size: 0.82rem; }
+  .item-list li { gap: 5px; }
+  .item-icon   { font-size: 0.88rem; }
+  .item-countdown { font-size: 0.7rem; min-width: 26px; }
+  .wait-badge  { padding: 2px 0 3px; font-size: 0.72rem; }
+  .card-footer { padding-top: 6px; margin-top: 0; }
 
-  /* ── フッターボタン ── */
-  .footer-actions { gap: 4px; }
+  /* ── フッターボタン: タップしやすいサイズ ── */
+  .footer-actions { gap: 5px; }
   .btn-wait,
-  .btn-chaser,
-  .btn-call-mgr  { padding: 4px 7px; font-size: 0.68rem; }
-  .btn-present   { padding: 4px 10px; font-size: 0.68rem; }
+  .btn-chaser    { min-height: 36px; padding: 4px 10px; font-size: 0.72rem; }
+  .btn-present   { min-height: 36px; padding: 4px 12px; font-size: 0.72rem; }
+
+  /* ── 設定: iOSズーム防止 (font-size>=16px) ── */
+  #sfx-volume { font-size: 16px; }
 }
 
 /* ===== MOBILE 縦画面（通常）===== */
@@ -1853,19 +1842,20 @@ body {
 
   /* ヘッダー: タイトル非表示・最小余白 */
   .kds-header {
-    padding: 3px 6px;
+    padding: 4px 8px;
+    padding-top: calc(4px + env(safe-area-inset-top, 0px));
     gap: 6px;
     flex-wrap: nowrap;
   }
   .kds-brand { display: none; }
-  .kds-stat:not(:nth-child(2)) { display: none; }
-  .kds-stat-val       { font-size: 0.82rem; }
-  .kds-stat-label     { font-size: 0.54rem; }
-  .kds-countdown-wrap { font-size: 0.7rem; }
-  #kds-countdown      { font-size: 0.88rem; }
-  .kds-mode-badge     { font-size: 0.62rem; padding: 2px 5px; }
-  .btn-danger-call    { font-size: 0.68rem; padding: 4px 7px; }
-  .kds-settings-btn   { font-size: 0.88rem; padding: 2px 6px; }
+  .kds-countdown-wrap { font-size: 0.72rem; }
+  #kds-countdown      { font-size: 0.9rem; }
+  .kds-mode-badge     { font-size: 0.64rem; padding: 2px 6px; }
+  .btn-danger-call    { min-height: 34px; font-size: 0.7rem; padding: 4px 8px; }
+  .kds-settings-btn   { min-height: 34px; font-size: 0.9rem; padding: 2px 8px; }
+  .sok-indicator      { gap: 4px; }
+  .sok-slot           { width: 20px; height: 20px; font-size: 0.6rem; }
+  .sok-label          { font-size: 0.52rem; }
 
   /* グリッド: 2カラム */
   .kds-grid {
@@ -1874,26 +1864,28 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 
-  /* ポテトステーション: 常時表示・折りたたみなし */
+  /* ポテトステーション: 常時表示・折りたたみなし・safe-area対応 */
   .potato-station-toggle { display: none; }
   .potato-station.collapsed .potato-station-body { display: flex !important; }
-  .potato-station.collapsed { padding: 4px 8px 5px; }
-  .potato-station { padding: 4px 8px 5px; }
+  .potato-station {
+    padding: 5px 10px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .potato-station.collapsed { padding: 4px 10px calc(4px + env(safe-area-inset-bottom, 0px)); }
   .potato-station-header { margin-bottom: 4px; }
-  .potato-station-body   { flex-direction: column; gap: 6px; }
-  .fryer-row   { gap: 5px; }
-  .fryer-slot  { width: 72px; padding: 4px 6px; gap: 3px; }
-  .fryer-idle-icon  { font-size: 1rem; }
-  .fryer-phase-icon { font-size: 1.1rem; }
-  .btn-fry-start { padding: 2px 4px; font-size: 0.62rem; }
-  .fryer-remain { font-size: 0.58rem; }
+  /* 縦画面: フライヤーとストックを横並び */
+  .potato-station-body { flex-direction: row; align-items: flex-start; gap: 8px; }
+  .fryer-row   { gap: 5px; flex-shrink: 0; }
+  .fryer-slot  { width: 70px; padding: 5px 6px; gap: 3px; }
+  .fryer-idle-icon  { font-size: 1.1rem; }
+  .fryer-phase-icon { font-size: 1.2rem; }
+  .btn-fry-start { min-height: 30px; padding: 3px 4px; font-size: 0.64rem; }
+  .fryer-remain { font-size: 0.6rem; }
   .fryer-bar-bg { height: 5px; }
-  .stock-grid { gap: 5px; }
-  .stock-box  { padding: 3px 5px; }
-  .stock-size-label   { font-size: 0.62rem; }
-  .stock-potato-icons { font-size: 0.75rem; }
-  .stock-expiry       { font-size: 0.58rem; }
-  .btn-potato-conv    { font-size: 0.6rem; padding: 2px 5px; }
+  .stock-grid { gap: 3px; flex: 1; }
+  .stock-box  { padding: 3px 6px; }
+  .stock-potato-icons { font-size: 1.05rem; }
+  .btn-potato-conv { min-height: 28px; font-size: 0.6rem; padding: 2px 5px; }
 }
 
 /* ===== MOBILE 横画面（フルスクリーン）===== */
@@ -1922,9 +1914,9 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
 
-  /* ポテトステーション: コンパクト・折りたたみあり・トグルボタン中央 */
-  .potato-station { padding: 3px 8px 4px; }
-  .potato-station.collapsed { padding: 2px 8px 2px; }
+  /* ポテトステーション: コンパクト・折りたたみあり・safe-area対応 */
+  .potato-station { padding: 3px 8px 4px; padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px)); }
+  .potato-station.collapsed { padding: 2px 8px calc(2px + env(safe-area-inset-bottom, 0px)); }
   .potato-station.collapsed .potato-station-header { margin-bottom: 0; }
   .potato-station-header { margin-bottom: 3px; }
   .potato-station-body   { flex-direction: row; gap: 8px; overflow-x: auto; }
@@ -1935,12 +1927,10 @@ body {
   .btn-fry-start { padding: 2px 3px; font-size: 0.56rem; }
   .fryer-remain { font-size: 0.5rem; }
   .fryer-bar-bg { height: 4px; }
-  .stock-grid { gap: 4px; }
+  .stock-grid { gap: 2px; }
   .stock-box  { padding: 2px 4px; }
-  .stock-size-label   { font-size: 0.55rem; }
-  .stock-potato-icons { font-size: 0.6rem; }
-  .stock-expiry       { font-size: 0.5rem; }
-  .btn-potato-conv    { font-size: 0.54rem; padding: 1px 4px; }
+  .stock-count { font-size: 0.78rem; }
+  .btn-potato-conv    { font-size: 0.5rem; padding: 1px 3px; }
 
   /* ホーム画面: 横向きは2カラム風にコンパクト */
   #start-screen {
